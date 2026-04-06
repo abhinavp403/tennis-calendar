@@ -1,0 +1,28 @@
+✅ Tennis Calendar App — Complete
+
+The Electron + React desktop app is now running (npm run dev).
+
+What's built:
+
+ - Monthly calendar with prev/next navigation and "Today" button
+ - ATP/WTA toggle top-left (ATP blue / WTA pink theming, including today-ring color)
+ - Tournament badges on start date 🏁 and final date 🏆 for every 250/500/1000 event
+ - Hover tooltip showing tournament name, location, surface, level, and date type
+ - 103 tournaments in data/tournaments.json — 54 ATP + 49 WTA for all of 2026
+ - Level color coding: 🟡 Gold = 1000 · 🔵 Blue = 500 · ⚫ Gray = 250
+ - Footer legend showing level colors
+ - Dark theme (#0f0f13 background)
+
+About logos:
+
+Wikimedia rate-limited the bulk download. The styled fallback badges look professional and work perfectly. To get
+actual logos later, run:
+
+ python scripts/download_logos.py
+
+Place any logo PNGs manually in public/logos/ — filenames are in data/tournaments.json (e.g. atp_monte_carlo.png).
+
+Commands:
+
+ npm run dev    # Start app (Vite + Electron)
+ npm run build  # Build for production
