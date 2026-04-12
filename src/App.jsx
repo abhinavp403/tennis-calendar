@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import dayjs from 'dayjs';
 import Calendar from './components/Calendar.jsx';
-import tournamentData from '../data/tournaments.json';
+import staticTournamentData from '../data/tournaments.json';
+
+// In Electron, use live data from disk (kept up-to-date by main process).
+// In browser/dev, fall back to the bundled static import.
+const tournamentData = window.electronAPI?.getTournaments() ?? staticTournamentData;
 
 export default function App() {
   const [tour, setTour] = useState('atp');

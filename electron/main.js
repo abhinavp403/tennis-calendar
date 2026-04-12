@@ -1,11 +1,14 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import { existsSync } from 'fs';
+import { fetchMissingResults } from '../scripts/fetchResults.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function createWindow() {
-  const isDev = !app.isPackaged;
+  const distIndex = path.join(__dirname, '../dist/index.html');
+  const isDev = !app.isPackaged && !existsSync(distIndex);
 
   const win = new BrowserWindow({
     width: 1400,
@@ -15,6 +18,7 @@ function createWindow() {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
+      preload: path.join(__dirname, 'preload.cjs'),
     },
     backgroundColor: '#0f0f13',
     title: 'Tennis Calendar',
@@ -28,6 +32,18 @@ function createWindow() {
   } else {
     win.loadFile(path.join(__dirname, '../dist/index.html'));
   }
+
+  // After window is ready, fetch any missing results in the background.
+  // If new results are found, reload the window to display them.
+  win.webContents.once('did-finish-load', () => {
+    fetchMissingResults()
+      .then(updated => {
+        if (updated && !win.isDestroyed()) {
+          win.webContents.reload();
+        }
+      })
+      .catch(err => console.error('fetchMissingResults error:', err));
+  });
 }
 
 app.whenReady().then(createWindow);
