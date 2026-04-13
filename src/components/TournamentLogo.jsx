@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import dayjs from 'dayjs';
 
 const LEVEL_STYLES = {
+  2000: { bg: '#2e1065', border: '#a78bfa', text: '#ede9fe', glow: 'rgba(167,139,250,0.6)' },
   1000: { bg: '#7c2d0a', border: '#f59e0b', text: '#fde68a', glow: 'rgba(245,158,11,0.5)' },
   500:  { bg: '#1e3a8a', border: '#60a5fa', text: '#bfdbfe', glow: 'rgba(96,165,250,0.4)' },
   250:  { bg: '#1f2937', border: '#9ca3af', text: '#e5e7eb', glow: 'rgba(156,163,175,0.25)' },
@@ -157,7 +158,7 @@ export default function TournamentLogo({ tournament }) {
                 padding: '1px 5px',
               }}
             >
-              {tournament.level}
+              {tournament.level === 2000 ? 'Grand Slam' : tournament.level}
             </span>
             <span style={{ fontSize: '11px', color: '#9ca3af' }}>
               {DATE_ICON[tournament.dateType]}{' '}

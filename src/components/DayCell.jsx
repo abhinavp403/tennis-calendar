@@ -6,6 +6,7 @@ const TOUR_RING = {
 };
 
 const LEVEL_ACCENT = {
+  2000: { border: '#7c3aed', glow: 'rgba(139,92,246,0.25)' },
   1000: { border: '#b45309', glow: 'rgba(245,158,11,0.15)' },
   500:  { border: '#1d4ed8', glow: 'rgba(59,130,246,0.12)' },
   250:  { border: '#374151', glow: 'rgba(107,114,128,0.08)' },

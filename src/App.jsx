@@ -144,6 +144,7 @@ export default function App() {
       >
         <span className="text-xs font-semibold mr-2" style={{ color: '#4b5580', letterSpacing: '1px' }}>LEVEL</span>
         {[
+          { color: '#a78bfa', glow: 'rgba(167,139,250,0.5)', label: 'Grand Slam' },
           { color: '#f59e0b', glow: 'rgba(245,158,11,0.4)', label: '1000' },
           { color: '#3b82f6', glow: 'rgba(59,130,246,0.4)', label: '500' },
           { color: '#8b8fa8', glow: 'rgba(139,143,168,0.3)', label: '250' },

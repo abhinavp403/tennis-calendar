@@ -53,6 +53,19 @@
       "score": "6–3, 7–6(7)"
     },
     {
+      "id": "atp-australian-open-2026",
+      "name": "Australian Open",
+      "level": 2000,
+      "start": "2026-01-19",
+      "end": "2026-02-01",
+      "location": "Melbourne, Australia",
+      "surface": "Hard",
+      "logo": "australian_open.png",
+      "winner": "C. Alcaraz",
+      "runner_up": "N. Djokovic",
+      "score": "2–6, 6–2, 6–3, 7–5"
+    },
+    {
       "id": "atp-montpellier-2026",
       "name": "Open Occitanie",
       "level": 250,
@@ -255,7 +268,10 @@
       "end": "2026-04-12",
       "location": "Roquebrune-Cap-Martin, France",
       "surface": "Clay",
-      "logo": "atp_monte_carlo_masters.png"
+      "logo": "atp_monte_carlo_masters.png",
+      "winner": "Jannik Sinner",
+      "runner_up": "Carlos Alcaraz",
+      "score": "7–6(7–5), 6–3"
     },
     {
       "id": "atp-barcelona-2026",
@@ -318,6 +334,16 @@
       "logo": "atp_geneva_open.png"
     },
     {
+      "id": "atp-roland-garros-2026",
+      "name": "Roland Garros",
+      "level": 2000,
+      "start": "2026-05-25",
+      "end": "2026-06-07",
+      "location": "Paris, France",
+      "surface": "Clay",
+      "logo": "roland_garros.png"
+    },
+    {
       "id": "atp-stuttgart-grass-2026",
       "name": "Stuttgart Open",
       "level": 250,
@@ -376,6 +402,16 @@
       "location": "Eastbourne, United Kingdom",
       "surface": "Grass",
       "logo": "atp_eastbourne_international.png"
+    },
+    {
+      "id": "atp-wimbledon-2026",
+      "name": "Wimbledon",
+      "level": 2000,
+      "start": "2026-06-29",
+      "end": "2026-07-12",
+      "location": "London, UK",
+      "surface": "Grass",
+      "logo": "wimbledon.png"
     },
     {
       "id": "atp-bastad-2026",
@@ -476,6 +512,16 @@
       "location": "Winston-Salem, USA",
       "surface": "Hard",
       "logo": "atp_winston_salem_open.png"
+    },
+    {
+      "id": "atp-us-open-2026",
+      "name": "US Open",
+      "level": 2000,
+      "start": "2026-08-31",
+      "end": "2026-09-13",
+      "location": "New York, USA",
+      "surface": "Hard",
+      "logo": "us_open.png"
     },
     {
       "id": "atp-chengdu-2026",
@@ -650,6 +696,19 @@
       "winner": "E. Cocciaretto",
       "runner_up": "I. Jovic",
       "score": "6–4, 6–4"
+    },
+    {
+      "id": "wta-australian-open-2026",
+      "name": "Australian Open",
+      "level": 2000,
+      "start": "2026-01-19",
+      "end": "2026-02-01",
+      "location": "Melbourne, Australia",
+      "surface": "Hard",
+      "logo": "australian_open.png",
+      "winner": "E. Rybakina",
+      "runner_up": "A. Sabalenka",
+      "score": "6–4, 4–6, 6–4"
     },
     {
       "id": "wta-abu-dhabi-2026",
@@ -865,6 +924,16 @@
       "logo": "wta_morocco_open.png"
     },
     {
+      "id": "wta-roland-garros-2026",
+      "name": "Roland Garros",
+      "level": 2000,
+      "start": "2026-05-25",
+      "end": "2026-06-07",
+      "location": "Paris, France",
+      "surface": "Clay",
+      "logo": "roland_garros.png"
+    },
+    {
       "id": "wta-queens-2026",
       "name": "Queen's Club Championships",
       "level": 500,
@@ -923,6 +992,16 @@
       "location": "Eastbourne, United Kingdom",
       "surface": "Grass",
       "logo": "wta_eastbourne_international.png"
+    },
+    {
+      "id": "wta-wimbledon-2026",
+      "name": "Wimbledon",
+      "level": 2000,
+      "start": "2026-06-29",
+      "end": "2026-07-12",
+      "location": "London, UK",
+      "surface": "Grass",
+      "logo": "wimbledon.png"
     },
     {
       "id": "wta-iasi-2026",
@@ -1003,6 +1082,16 @@
       "location": "Monterrey, Mexico",
       "surface": "Hard",
       "logo": "wta_monterrey_open.png"
+    },
+    {
+      "id": "wta-us-open-2026",
+      "name": "US Open",
+      "level": 2000,
+      "start": "2026-08-31",
+      "end": "2026-09-13",
+      "location": "New York, USA",
+      "surface": "Hard",
+      "logo": "us_open.png"
     },
     {
       "id": "wta-guadalajara-2026",
