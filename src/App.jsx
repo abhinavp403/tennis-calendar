@@ -2,10 +2,12 @@ import { useState } from 'react';
 import dayjs from 'dayjs';
 import Calendar from './components/Calendar.jsx';
 import staticTournamentData from '../data/tournaments.json';
+import staticRankingsData from '../data/rankings.json';
 
 // In Electron, use live data from disk (kept up-to-date by main process).
 // In browser/dev, fall back to the bundled static import.
 const tournamentData = window.electronAPI?.getTournaments() ?? staticTournamentData;
+const rankingsData = window.electronAPI?.getRankings?.() ?? staticRankingsData;
 
 export default function App() {
   const [tour, setTour] = useState('atp');
@@ -134,7 +136,7 @@ export default function App() {
 
       {/* Calendar */}
       <main className="flex-1 p-6 overflow-auto">
-        <Calendar currentDate={currentDate} tournaments={tournaments} tour={tour} />
+        <Calendar currentDate={currentDate} tournaments={tournaments} tour={tour} rankingsData={rankingsData} />
       </main>
 
       {/* Legend */}

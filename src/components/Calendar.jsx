@@ -2,11 +2,13 @@ import { useState } from 'react';
 import dayjs from 'dayjs';
 import DayCell from './DayCell.jsx';
 import MonthSummaryDialog from './MonthSummaryDialog.jsx';
+import RankingsDialog from './RankingsDialog.jsx';
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-export default function Calendar({ currentDate, tournaments, tour }) {
+export default function Calendar({ currentDate, tournaments, tour, rankingsData }) {
   const [showSummary, setShowSummary] = useState(false);
+  const [showRankings, setShowRankings] = useState(false);
   const monthStart = currentDate.startOf('month');
   const daysInMonth = currentDate.daysInMonth();
   const firstDayOfWeek = monthStart.day(); // 0=Sun … 6=Sat
@@ -44,6 +46,17 @@ export default function Calendar({ currentDate, tournaments, tour }) {
   const accentColor = tour === 'atp' ? '#0066cc' : '#be398d';
   const monthLabel = currentDate.format('MMMM YYYY');
 
+  // Rankings: only show for fully completed months
+  const monthEnd = currentDate.endOf('month');
+  const isMonthComplete = monthEnd.isBefore(today);
+  const monthKey = currentDate.format('YYYY-MM');
+  const tourRankings = rankingsData?.[tour] ?? {};
+  const rankings = tourRankings[monthKey] ?? null;
+
+  // Previous month rankings for movement comparison
+  const prevMonthKey = currentDate.subtract(1, 'month').format('YYYY-MM');
+  const prevRankings = tourRankings[prevMonthKey] ?? null;
+
   return (
     <div className="w-full">
       {/* Day-of-week labels */}
@@ -77,30 +90,55 @@ export default function Calendar({ currentDate, tournaments, tour }) {
         )}
       </div>
 
-      {/* Month Summary button */}
-      {completedThisMonth.length > 0 && (
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
-          <button
-            onClick={() => setShowSummary(true)}
-            style={{
-              background: 'transparent',
-              border: `1px solid ${accentColor}`,
-              borderRadius: '8px',
-              color: accentColor,
-              fontSize: '13px',
-              fontWeight: '600',
-              padding: '8px 20px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              transition: 'background 0.15s',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.background = `${accentColor}22`)}
-            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-          >
-            📋 {monthLabel} Results ({completedThisMonth.length})
-          </button>
+      {/* Month action buttons — side by side */}
+      {(completedThisMonth.length > 0 || (isMonthComplete && rankings)) && (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '20px' }}>
+          {completedThisMonth.length > 0 && (
+            <button
+              onClick={() => setShowSummary(true)}
+              style={{
+                background: 'transparent',
+                border: `1px solid ${accentColor}`,
+                borderRadius: '8px',
+                color: accentColor,
+                fontSize: '13px',
+                fontWeight: '600',
+                padding: '8px 20px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = `${accentColor}22`)}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+            >
+              📋 {monthLabel} Results ({completedThisMonth.length})
+            </button>
+          )}
+          {isMonthComplete && rankings && (
+            <button
+              onClick={() => setShowRankings(true)}
+              style={{
+                background: 'transparent',
+                border: `1px solid ${accentColor}`,
+                borderRadius: '8px',
+                color: accentColor,
+                fontSize: '13px',
+                fontWeight: '600',
+                padding: '8px 20px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = `${accentColor}22`)}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+            >
+              📊 {monthLabel} Rankings
+            </button>
+          )}
         </div>
       )}
 
@@ -110,6 +148,16 @@ export default function Calendar({ currentDate, tournaments, tour }) {
           completedTournaments={completedThisMonth}
           tour={tour}
           onClose={() => setShowSummary(false)}
+        />
+      )}
+
+      {showRankings && rankings && (
+        <RankingsDialog
+          monthLabel={monthLabel}
+          rankings={rankings}
+          prevRankings={prevRankings}
+          tour={tour}
+          onClose={() => setShowRankings(false)}
         />
       )}
     </div>
