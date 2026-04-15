@@ -10,11 +10,13 @@ A desktop app built with **Electron + React + Vite** that displays the full 2026
 
 - 📅 **Monthly calendar view** — navigate through the full 2026 season month by month
 - 🏆 **Tournament final-day markers** — each tournament appears on its final day with a logo/badge
+- 🎾 **Grand Slam highlighting** — Grand Slams appear in distinct violet/purple with finals results (winner, runner-up, score)
 - 🔍 **Hover tooltips** — hover over any tournament to see name, location, surface, and level
 - ✅ **Match results on hover** — completed tournaments show the winner, runner-up, and final score
 - 📋 **Month summary dialog** — a "Results" button below the calendar opens a summary of all completed tournaments for that month
+- 📊 **Monthly rankings** — a "Rankings" button shows the top 32 ATP/WTA players at end of each completed month, with points and ▲▼ movement indicators vs. the previous month
 - 🔵🩷 **ATP / WTA toggle** — switch between the men's and women's tour instantly
-- 🎨 **Vibrant dark theme** — colour-coded by tournament level (1000 / 500 / 250) with glows and gradients
+- 🎨 **Vibrant dark theme** — colour-coded by tournament level (Grand Slam / 1000 / 500 / 250) with glows and gradients
 
 ---
 
@@ -22,7 +24,8 @@ A desktop app built with **Electron + React + Vite** that displays the full 2026
 
 | Level | Colour | Examples |
 |-------|--------|---------|
-| **1000** | 🟡 Amber | Indian Wells, Miami, Roland Garros |
+| **Grand Slam** | 🟣 Violet | Australian Open, Roland Garros, Wimbledon, US Open |
+| **1000** | 🟡 Amber | Indian Wells, Miami, Madrid |
 | **500** | 🔵 Blue | Dubai, Rotterdam, Dallas |
 | **250** | ⚪ Grey | Adelaide, Hobart, Delray Beach |
 
@@ -66,6 +69,27 @@ npm run dev
 ```bash
 npm run build
 ```
+
+---
+
+## Downloading the App (No Setup Required)
+
+Pre-built installers are generated automatically via GitHub Actions on every push.
+
+### macOS (Apple Silicon)
+
+1. Go to the [**Actions** tab](https://github.com/abhinavp403/tennis-calendar/actions) on GitHub
+2. Click the latest **"Build Distributables"** run
+3. Download the **Tennis-Calendar-macOS** artifact (`.dmg`)
+4. Open the `.dmg`, drag **Tennis Calendar** to Applications
+5. **First launch:** right-click the app → **Open** (to bypass Gatekeeper — the app is unsigned)
+
+### Windows
+
+1. Go to the [**Actions** tab](https://github.com/abhinavp403/tennis-calendar/actions) on GitHub
+2. Click the latest **"Build Distributables"** run
+3. Download the **Tennis-Calendar-Windows** artifact (`.exe`)
+4. Run the installer — Windows may show a SmartScreen warning; click **More info → Run anyway**
 
 ---
 
