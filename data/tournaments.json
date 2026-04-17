@@ -278,7 +278,7 @@
       "name": "Barcelona Open",
       "level": 500,
       "start": "2026-04-13",
-      "end": "2026-04-22",
+      "end": "2026-04-19",
       "location": "Barcelona, Spain",
       "surface": "Clay",
       "logo": "atp_barcelona_open.png"
@@ -288,7 +288,7 @@
       "name": "Bavarian International Tennis Championships",
       "level": 500,
       "start": "2026-04-13",
-      "end": "2026-04-22",
+      "end": "2026-04-19",
       "location": "Munich, Germany",
       "surface": "Clay",
       "logo": "atp_bavarian_international_tennis_championships.png"
@@ -871,7 +871,7 @@
       "name": "Stuttgart Open",
       "level": 500,
       "start": "2026-04-13",
-      "end": "2026-04-22",
+      "end": "2026-04-19",
       "location": "Stuttgart, Germany",
       "surface": "Clay",
       "logo": "wta_stuttgart_open.png"
