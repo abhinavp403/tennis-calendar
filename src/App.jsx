@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import dayjs from 'dayjs';
 import Calendar from './components/Calendar.jsx';
+import AppLogo from './components/AppLogo.jsx';
 import staticTournamentData from '../data/tournaments.json';
 import staticRankingsData from '../data/rankings.json';
 
@@ -40,8 +41,10 @@ export default function App() {
           boxShadow: '0 2px 20px rgba(0,0,0,0.4)',
         }}
       >
-        {/* ATP / WTA Toggle */}
-        <div className="flex gap-2 items-center">
+        {/* Logo + ATP / WTA Toggle */}
+        <div className="flex gap-3 items-center">
+          <AppLogo size={38} />
+          <div style={{ width: 1, height: 28, background: '#252545', margin: '0 2px' }} />
           <button
             onClick={() => setTour('atp')}
             className="px-5 py-2 rounded-full text-sm font-bold tracking-wider transition-all duration-200"

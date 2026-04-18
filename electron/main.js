@@ -32,6 +32,7 @@ function createWindow() {
     height: 900,
     minWidth: 960,
     minHeight: 640,
+    icon: path.join(__dirname, '../public/logos/app-logo.icns'),
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,

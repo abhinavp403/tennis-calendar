@@ -43,14 +43,15 @@
     ],
     "mac": {
       "target": "dmg",
-      "icon": "public/logos/wimbledon.png"
+      "icon": "public/logos/app-logo.icns"
     },
     "win": {
       "target": "nsis",
-      "icon": "public/logos/wimbledon.png"
+      "icon": "public/logos/app-logo.png"
     },
     "linux": {
-      "target": "AppImage"
+      "target": "AppImage",
+      "icon": "public/logos/app-logo.png"
     }
   }
 }
