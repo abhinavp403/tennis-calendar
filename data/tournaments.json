@@ -281,7 +281,10 @@
       "end": "2026-04-19",
       "location": "Barcelona, Spain",
       "surface": "Clay",
-      "logo": "atp_barcelona_open.png"
+      "logo": "atp_barcelona_open.png",
+      "winner": "Arthur Fils",
+      "runner_up": "Andrey Rublev",
+      "score": "6–2, 7–6(7–2)"
     },
     {
       "id": "atp-munich-2026",
@@ -291,7 +294,10 @@
       "end": "2026-04-19",
       "location": "Munich, Germany",
       "surface": "Clay",
-      "logo": "atp_bavarian_international_tennis_championships.png"
+      "logo": "atp_bavarian_international_tennis_championships.png",
+      "winner": "Ben Shelton",
+      "runner_up": "Flavio Cobolli",
+      "score": "6–2, 7–5"
     },
     {
       "id": "atp-madrid-2026",
@@ -874,7 +880,10 @@
       "end": "2026-04-19",
       "location": "Stuttgart, Germany",
       "surface": "Clay",
-      "logo": "wta_stuttgart_open.png"
+      "logo": "wta_stuttgart_open.png",
+      "winner": "Elena Rybakina",
+      "runner_up": "Karolína Muchová",
+      "score": "7–5, 6–1"
     },
     {
       "id": "wta-rouen-2026",
@@ -884,7 +893,10 @@
       "end": "2026-04-19",
       "location": "Rouen, France",
       "surface": "Clay",
-      "logo": "wta_open_de_rouen.png"
+      "logo": "wta_open_de_rouen.png",
+      "winner": "Marta Kostyuk",
+      "runner_up": "Veronika Podrez",
+      "score": "6–3, 6–4"
     },
     {
       "id": "wta-madrid-2026",
