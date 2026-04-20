@@ -120,8 +120,8 @@ async function fetchResultForTournament(tournament) {
   return null;
 }
 
-export async function fetchMissingResults() {
-  const data = JSON.parse(readFileSync(DATA_PATH, 'utf-8'));
+export async function fetchMissingResults(dataPath = DATA_PATH) {
+  const data = JSON.parse(readFileSync(dataPath, 'utf-8'));
   const today = new Date().toISOString().slice(0, 10);
   let updated = false;
 
@@ -145,7 +145,7 @@ export async function fetchMissingResults() {
   }
 
   if (updated) {
-    writeFileSync(DATA_PATH, JSON.stringify(data, null, 2) + '\n');
+    writeFileSync(dataPath, JSON.stringify(data, null, 2) + '\n');
     console.log('tournaments.json updated with new results.');
   } else {
     console.log('No missing results to update.');

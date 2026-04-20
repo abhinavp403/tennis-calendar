@@ -174,8 +174,8 @@ async function checkTournamentDate(tournament) {
   return null;
 }
 
-export async function fixTournamentDates() {
-  const data = JSON.parse(readFileSync(DATA_PATH, 'utf-8'));
+export async function fixTournamentDates(dataPath = DATA_PATH) {
+  const data = JSON.parse(readFileSync(dataPath, 'utf-8'));
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -214,7 +214,7 @@ export async function fixTournamentDates() {
   }
 
   if (updated) {
-    writeFileSync(DATA_PATH, JSON.stringify(data, null, 2) + '\n');
+    writeFileSync(dataPath, JSON.stringify(data, null, 2) + '\n');
     console.log('\ntournaments.json updated with corrected dates.');
   } else {
     console.log('\nAll dates verified — no changes needed.');

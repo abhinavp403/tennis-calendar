@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { fetchMissingResults } from '../scripts/fetchResults.js';
 import { fixTournamentDates } from '../scripts/fixDates.js';
 
@@ -9,6 +9,39 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const LAST_RUN_PATH = path.join(app.getPath('userData'), 'lastDateCheck.json');
 const DATE_CHECK_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/abhinavp403/tennis-calendar/main/data';
+
+async function syncUserData() {
+  const userDataDir = app.getPath('userData');
+  mkdirSync(userDataDir, { recursive: true });
+
+  // Seed userData from bundled files on first launch
+  for (const file of ['tournaments.json', 'rankings.json']) {
+    const userPath = path.join(userDataDir, file);
+    if (!existsSync(userPath)) {
+      writeFileSync(userPath, readFileSync(path.join(__dirname, '../data', file)));
+    }
+  }
+
+  // Pull latest committed data from GitHub (silent fail if offline)
+  try {
+    for (const file of ['tournaments.json', 'rankings.json']) {
+      const res = await fetch(`${GITHUB_RAW_BASE}/${file}`, { signal: AbortSignal.timeout(8000) });
+      if (res.ok) {
+        const text = await res.text();
+        JSON.parse(text); // validate before writing
+        writeFileSync(path.join(userDataDir, file), text);
+      }
+    }
+    console.log('Synced latest data from GitHub.');
+  } catch {
+    console.log('GitHub sync skipped (offline or timeout) — using local data.');
+  }
+
+  // Expose path so preload can read from userData instead of the app bundle
+  process.env.USER_DATA_PATH = userDataDir;
+}
 
 function shouldRunDateCheck() {
   try {
@@ -51,13 +84,12 @@ function createWindow() {
     win.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 
-  // After window is ready, run background data updates.
-  // Reload the window if any data changed.
   win.webContents.once('did-finish-load', async () => {
+    const tournamentsPath = path.join(app.getPath('userData'), 'tournaments.json');
     let updated = false;
 
     try {
-      updated = (await fetchMissingResults()) || updated;
+      updated = (await fetchMissingResults(tournamentsPath)) || updated;
     } catch (err) {
       console.error('fetchMissingResults error:', err);
     }
@@ -65,7 +97,7 @@ function createWindow() {
     if (shouldRunDateCheck()) {
       console.log('Running weekly tournament date check...');
       try {
-        const datesUpdated = await fixTournamentDates();
+        const datesUpdated = await fixTournamentDates(tournamentsPath);
         updated = datesUpdated || updated;
         recordDateCheckRun();
       } catch (err) {
@@ -79,7 +111,10 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(async () => {
+  await syncUserData();
+  createWindow();
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
