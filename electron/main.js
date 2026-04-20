@@ -7,8 +7,10 @@ import { fixTournamentDates } from '../scripts/fixDates.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const LAST_RUN_PATH = path.join(app.getPath('userData'), 'lastDateCheck.json');
 const DATE_CHECK_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+let lastRunPath = null;  // set after app is ready
+let initialized = false; // gate for the activate handler
 
 const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/abhinavp403/tennis-calendar/main/data';
 
@@ -44,8 +46,9 @@ async function syncUserData() {
 }
 
 function shouldRunDateCheck() {
+  if (!lastRunPath) return false;
   try {
-    const { lastRun } = JSON.parse(readFileSync(LAST_RUN_PATH, 'utf-8'));
+    const { lastRun } = JSON.parse(readFileSync(lastRunPath, 'utf-8'));
     return Date.now() - new Date(lastRun).getTime() >= DATE_CHECK_INTERVAL_MS;
   } catch {
     return true; // No record yet — run on first launch
@@ -53,7 +56,7 @@ function shouldRunDateCheck() {
 }
 
 function recordDateCheckRun() {
-  writeFileSync(LAST_RUN_PATH, JSON.stringify({ lastRun: new Date().toISOString() }));
+  if (lastRunPath) writeFileSync(lastRunPath, JSON.stringify({ lastRun: new Date().toISOString() }));
 }
 
 function createWindow() {
@@ -112,7 +115,9 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
+  lastRunPath = path.join(app.getPath('userData'), 'lastDateCheck.json');
   await syncUserData();
+  initialized = true;
   createWindow();
 });
 
@@ -121,5 +126,6 @@ app.on('window-all-closed', () => {
 });
 
 app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  // Guard against firing before syncUserData() completes
+  if (BrowserWindow.getAllWindows().length === 0 && initialized) createWindow();
 });
