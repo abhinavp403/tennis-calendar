@@ -1,6 +1,6 @@
 # 🎾 Tennis Calendar 2026
 
-A desktop app built with **Electron + React + Vite** that displays the full 2026 ATP and WTA tour schedules on an interactive calendar, including final results for completed tournaments.
+A desktop app built with **Electron + React + Vite** that displays the full 2026 ATP and WTA tour schedules on an interactive calendar, including final results, player stats, and rankings.
 
 ![Tennis Calendar](https://img.shields.io/badge/Electron-React-blue?logo=electron) ![License](https://img.shields.io/badge/license-ISC-green)
 
@@ -13,7 +13,8 @@ A desktop app built with **Electron + React + Vite** that displays the full 2026
 - 🎾 **Grand Slam highlighting** — Grand Slams appear in distinct violet/purple with finals results (winner, runner-up, score)
 - 🔍 **Hover tooltips** — hover over any tournament to see name, location, surface, and level
 - ✅ **Match results on hover** — completed tournaments show the winner, runner-up, and final score
-- 📋 **Month summary dialog** — a "Results" button below the calendar opens a summary of all completed tournaments for that month
+- 📋 **Month summary dialog** — a "Results" button opens a summary of all completed tournaments for that month
+- 📈 **Player Stats (YTD)** — a cumulative year-to-date tally of every player's wins and runner-up finishes from January through the current month, sorted by wins
 - 📊 **Monthly rankings** — a "Rankings" button shows the top 32 ATP/WTA players at end of each completed month, with points and ▲▼ movement indicators vs. the previous month
 - 🔵🩷 **ATP / WTA toggle** — switch between the men's and women's tour instantly
 - 🎨 **Vibrant dark theme** — colour-coded by tournament level (Grand Slam / 1000 / 500 / 250) with glows and gradients
@@ -62,6 +63,9 @@ npm install
 
 # Start in development mode (Vite dev server + Electron)
 npm run dev
+
+# Or run in browser only (no Electron)
+npm run dev:vite
 ```
 
 ### Build
@@ -74,12 +78,12 @@ npm run build
 
 ## Downloading the App (No Setup Required)
 
-Pre-built installers are generated automatically via GitHub Actions on every push.
+Pre-built installers can be generated via GitHub Actions (triggered manually from the Actions tab).
 
 ### macOS (Apple Silicon)
 
 1. Go to the [**Actions** tab](https://github.com/abhinavp403/tennis-calendar/actions) on GitHub
-2. Click the latest **"Build Distributables"** run
+2. Select **"Build Distributables"** and click **Run workflow**
 3. Download the **Tennis-Calendar-macOS** artifact (`.dmg`)
 4. Open the `.dmg`, drag **Tennis Calendar** to Applications
 5. **First launch:** right-click the app → **Open** (to bypass Gatekeeper — the app is unsigned)
@@ -87,33 +91,9 @@ Pre-built installers are generated automatically via GitHub Actions on every pus
 ### Windows
 
 1. Go to the [**Actions** tab](https://github.com/abhinavp403/tennis-calendar/actions) on GitHub
-2. Click the latest **"Build Distributables"** run
+2. Select **"Build Distributables"** and click **Run workflow**
 3. Download the **Tennis-Calendar-Windows** artifact (`.exe`)
 4. Run the installer — Windows may show a SmartScreen warning; click **More info → Run anyway**
-
----
-
-## Project Structure
-
-```
-tennis_calendar/
-├── data/
-│   └── tournaments.json        # Full ATP & WTA schedule with results
-├── electron/
-│   └── main.js                 # Electron main process
-├── public/
-│   └── logos/                  # Tournament logo images
-├── src/
-│   ├── App.jsx                 # Root layout, header, navigation
-│   └── components/
-│       ├── Calendar.jsx        # Monthly grid + summary button
-│       ├── DayCell.jsx         # Individual day tile
-│       ├── TournamentLogo.jsx  # Logo/badge + hover tooltip
-│       └── MonthSummaryDialog.jsx  # Results modal
-├── index.html
-├── vite.config.js
-└── package.json
-```
 
 ---
 
