@@ -61,7 +61,7 @@ function recordDateCheckRun() {
 
 function createWindow() {
   const distIndex = path.join(__dirname, '../dist/index.html');
-  const isDev = !app.isPackaged && !existsSync(distIndex);
+  const isDev = process.env.ELECTRON_DEV === 'true' || (!app.isPackaged && !existsSync(distIndex));
 
   const win = new BrowserWindow({
     width: 1400,
