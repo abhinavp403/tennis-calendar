@@ -3,12 +3,14 @@ import dayjs from 'dayjs';
 import DayCell from './DayCell.jsx';
 import MonthSummaryDialog from './MonthSummaryDialog.jsx';
 import RankingsDialog from './RankingsDialog.jsx';
+import PlayerStatsDialog from './PlayerStatsDialog.jsx';
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function Calendar({ currentDate, tournaments, tour, rankingsData }) {
   const [showSummary, setShowSummary] = useState(false);
   const [showRankings, setShowRankings] = useState(false);
+  const [showStats, setShowStats] = useState(false);
   const monthStart = currentDate.startOf('month');
   const daysInMonth = currentDate.daysInMonth();
   const firstDayOfWeek = monthStart.day(); // 0=Sun … 6=Sat
@@ -21,6 +23,16 @@ export default function Calendar({ currentDate, tournaments, tour, rankingsData 
     dayjs(t.end).isBefore(today) &&
     dayjs(t.end).month() === currentDate.month() &&
     dayjs(t.end).year() === currentDate.year()
+  ).sort((a, b) => (a.end > b.end ? 1 : -1));
+
+  // Cumulative: all tournaments completed from start of season through end of current month
+  const seasonStart = currentDate.startOf('year');
+  const monthEndDate = currentDate.endOf('month');
+  const cumulativeTournaments = tournaments.filter(t =>
+    t.winner &&
+    dayjs(t.end).isBefore(today) &&
+    dayjs(t.end).isSameOrAfter(seasonStart) &&
+    dayjs(t.end).isSameOrBefore(monthEndDate)
   ).sort((a, b) => (a.end > b.end ? 1 : -1));
 
   // Build date → [tournament, ...] map; tournaments appear only on their end date
@@ -59,6 +71,81 @@ export default function Calendar({ currentDate, tournaments, tour, rankingsData 
 
   return (
     <div className="w-full">
+      {/* Month action buttons — above the grid for visibility */}
+      {(completedThisMonth.length > 0 || (isMonthComplete && rankings)) && (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
+          {completedThisMonth.length > 0 && (
+            <button
+              onClick={() => setShowSummary(true)}
+              style={{
+                background: 'transparent',
+                border: `1px solid ${accentColor}`,
+                borderRadius: '8px',
+                color: accentColor,
+                fontSize: '13px',
+                fontWeight: '600',
+                padding: '8px 20px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = `${accentColor}22`)}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+            >
+              📋 {monthLabel} Results ({completedThisMonth.length})
+            </button>
+          )}
+          {cumulativeTournaments.length > 0 && (
+            <button
+              onClick={() => setShowStats(true)}
+              style={{
+                background: 'transparent',
+                border: `1px solid ${accentColor}`,
+                borderRadius: '8px',
+                color: accentColor,
+                fontSize: '13px',
+                fontWeight: '600',
+                padding: '8px 20px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = `${accentColor}22`)}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+            >
+              📈 Player Stats (YTD)
+            </button>
+          )}
+          {isMonthComplete && rankings && (
+            <button
+              onClick={() => setShowRankings(true)}
+              style={{
+                background: 'transparent',
+                border: `1px solid ${accentColor}`,
+                borderRadius: '8px',
+                color: accentColor,
+                fontSize: '13px',
+                fontWeight: '600',
+                padding: '8px 20px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = `${accentColor}22`)}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+            >
+              📊 {monthLabel} Rankings
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Day-of-week labels */}
       <div className="grid grid-cols-7 mb-2" style={{ gap: '4px' }}>
         {DAY_LABELS.map((d, i) => (
@@ -90,64 +177,21 @@ export default function Calendar({ currentDate, tournaments, tour, rankingsData 
         )}
       </div>
 
-      {/* Month action buttons — side by side */}
-      {(completedThisMonth.length > 0 || (isMonthComplete && rankings)) && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '20px' }}>
-          {completedThisMonth.length > 0 && (
-            <button
-              onClick={() => setShowSummary(true)}
-              style={{
-                background: 'transparent',
-                border: `1px solid ${accentColor}`,
-                borderRadius: '8px',
-                color: accentColor,
-                fontSize: '13px',
-                fontWeight: '600',
-                padding: '8px 20px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = `${accentColor}22`)}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-            >
-              📋 {monthLabel} Results ({completedThisMonth.length})
-            </button>
-          )}
-          {isMonthComplete && rankings && (
-            <button
-              onClick={() => setShowRankings(true)}
-              style={{
-                background: 'transparent',
-                border: `1px solid ${accentColor}`,
-                borderRadius: '8px',
-                color: accentColor,
-                fontSize: '13px',
-                fontWeight: '600',
-                padding: '8px 20px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = `${accentColor}22`)}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-            >
-              📊 {monthLabel} Rankings
-            </button>
-          )}
-        </div>
-      )}
-
       {showSummary && (
         <MonthSummaryDialog
           monthLabel={monthLabel}
           completedTournaments={completedThisMonth}
           tour={tour}
           onClose={() => setShowSummary(false)}
+        />
+      )}
+
+      {showStats && (
+        <PlayerStatsDialog
+          monthLabel={monthLabel}
+          completedTournaments={cumulativeTournaments}
+          tour={tour}
+          onClose={() => setShowStats(false)}
         />
       )}
 
