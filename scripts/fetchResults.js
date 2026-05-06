@@ -54,8 +54,28 @@ function cleanScore(raw) {
     .trim();
 }
 
+function extractFromInfobox(wikitext) {
+  // Parse | champ = / | champion = and | runner = / | runner-up = from infobox
+  const champMatch = wikitext.match(/\|\s*(?:champ|champion)\s*=\s*(?:\{\{[^}]+\}\}\s*)*\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/i);
+  const runnerMatch = wikitext.match(/\|\s*(?:runner|runner-up)\s*=\s*(?:\{\{[^}]+\}\}\s*)*\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/i);
+  const scoreMatch = wikitext.match(/\|\s*score\s*=\s*([^\n|]+)/i);
+
+  if (!champMatch || !runnerMatch || !scoreMatch) return null;
+
+  const winner = cleanPlayerName(champMatch[2] || champMatch[1]);
+  const runnerUp = cleanPlayerName(runnerMatch[2] || runnerMatch[1]);
+  const score = cleanScore(scoreMatch[1]);
+
+  if (!winner || !runnerUp || !score) return null;
+  return { winner, runner_up: runnerUp, score };
+}
+
 function extractSinglesResult(wikitext) {
-  // Find the === Singles === section
+  // First try infobox (used on dedicated singles pages)
+  const infoboxResult = extractFromInfobox(wikitext);
+  if (infoboxResult) return infoboxResult;
+
+  // Fall back: find the === Singles === section and parse the "def." line
   const singlesRe = /===\s*Singles\s*===/i;
   const doublesRe = /===\s*Doubles\s*===/i;
   const singlesIdx = wikitext.search(singlesRe);
@@ -91,10 +111,13 @@ function extractSinglesResult(wikitext) {
   return { winner, runner_up: runnerUp, score };
 }
 
-async function fetchResultForTournament(tournament) {
+async function fetchResultForTournament(tournament, tour) {
   const year = tournament.start.slice(0, 4);
-  // Try several search queries, most specific first
+  const singlesLabel = tour === 'wta' ? "Women's singles" : "Men's singles";
+
+  // Queries ordered from most specific (dedicated singles page) to fallback (main page)
   const queries = [
+    `${year} ${tournament.name} ${singlesLabel}`,
     `${year} ${tournament.name} tennis`,
     `${year} ${tournament.name}`,
   ];
@@ -102,8 +125,12 @@ async function fetchResultForTournament(tournament) {
   for (const query of queries) {
     const results = await searchWikipedia(query);
 
-    // Pick the first result whose title contains the year and is not a sub-page (–)
-    const candidate = results.find(r => r.title.includes(year) && !r.title.includes(' – '));
+    // Prefer a dedicated singles sub-page (title contains " – " and "singles")
+    // Fall back to main tournament page (has year, no " – ")
+    const candidate =
+      results.find(r => r.title.includes(year) && / – /i.test(r.title) && /singles/i.test(r.title)) ||
+      results.find(r => r.title.includes(year) && !r.title.includes(' – '));
+
     if (!candidate) continue;
 
     const wikitext = await getWikitext(candidate.title);
@@ -131,7 +158,7 @@ export async function fetchMissingResults(dataPath = DATA_PATH) {
 
       console.log(`Fetching result for: ${tournament.name} (${tournament.end})`);
       try {
-        const result = await fetchResultForTournament(tournament);
+        const result = await fetchResultForTournament(tournament, tour);
         if (result) {
           tournament.winner = result.winner;
           tournament.runner_up = result.runner_up;

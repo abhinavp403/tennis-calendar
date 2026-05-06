@@ -307,7 +307,10 @@
       "end": "2026-05-03",
       "location": "Madrid, Spain",
       "surface": "Clay",
-      "logo": "atp_madrid_open.png"
+      "logo": "atp_madrid_open.png",
+      "winner": "Jannik Sinner",
+      "runner_up": "Alexander Zverev",
+      "score": "6–1, 6–2"
     },
     {
       "id": "atp-rome-2026",
@@ -906,7 +909,10 @@
       "end": "2026-05-03",
       "location": "Madrid, Spain",
       "surface": "Clay",
-      "logo": "wta_madrid_open.png"
+      "logo": "wta_madrid_open.png",
+      "winner": "Marta Kostyuk",
+      "runner_up": "Mirra Andreeva",
+      "score": "6–3, 7–5"
     },
     {
       "id": "wta-rome-2026",
