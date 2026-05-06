@@ -33,10 +33,16 @@ async function getWikitext(title) {
 
 function cleanPlayerName(raw) {
   // [[Full Name (tennis)|Display]] → Display, or [[Full Name]] → Full Name
-  return raw
+  let name = raw
     .replace(/\s*\(tennis\)\s*/gi, '')
     .replace(/\s*\(.*?\)\s*/g, '')
     .trim();
+  // Abbreviate to "F. LastName" format for consistency with existing data
+  const parts = name.split(/\s+/);
+  if (parts.length >= 2) {
+    name = parts[0][0] + '. ' + parts.slice(1).join(' ');
+  }
+  return name;
 }
 
 function cleanScore(raw) {
