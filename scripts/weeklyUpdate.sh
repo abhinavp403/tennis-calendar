@@ -16,16 +16,22 @@ cd "$REPO"
 # Fix dates
 $NODE scripts/fixDates.js >> "$LOG" 2>&1
 
+# Fetch missing results
+$NODE scripts/fetchResults.js >> "$LOG" 2>&1
+
+# Fetch missing rankings
+$NODE scripts/fetchRankings.js >> "$LOG" 2>&1
+
 # Commit and push if anything changed
-if ! git diff --quiet data/tournaments.json; then
-  git add data/tournaments.json
-  git commit -m "chore: auto-correct tournament end dates (weekly update $(date +%Y-%m-%d))
+if ! git diff --quiet data/; then
+  git add data/tournaments.json data/rankings.json
+  git commit -m "chore: auto-update tournament data (weekly update $(date +%Y-%m-%d))
 
 Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>" >> "$LOG" 2>&1
   git push >> "$LOG" 2>&1
   echo "Changes committed and pushed." >> "$LOG"
 else
-  echo "No date changes — nothing to commit." >> "$LOG"
+  echo "No changes — nothing to commit." >> "$LOG"
 fi
 
 echo "=== Done ===" >> "$LOG"

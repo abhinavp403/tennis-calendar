@@ -4,6 +4,7 @@ import path from 'path';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { fetchMissingResults } from '../scripts/fetchResults.js';
 import { fixTournamentDates } from '../scripts/fixDates.js';
+import { fetchMissingRankings } from '../scripts/fetchRankings.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -95,6 +96,14 @@ function createWindow() {
       updated = (await fetchMissingResults(tournamentsPath)) || updated;
     } catch (err) {
       console.error('fetchMissingResults error:', err);
+    }
+
+    try {
+      const rankingsPath = path.join(app.getPath('userData'), 'rankings.json');
+      const rankingsUpdated = await fetchMissingRankings(rankingsPath);
+      updated = rankingsUpdated || updated;
+    } catch (err) {
+      console.error('fetchMissingRankings error:', err);
     }
 
     if (shouldRunDateCheck()) {
