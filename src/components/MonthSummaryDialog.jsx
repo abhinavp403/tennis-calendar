@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 
 const LEVEL_STYLES = {
+  2000: { bg: '#2e1065', border: '#a78bfa', text: '#ede9fe' },
+  1500: { bg: '#2e1065', border: '#a78bfa', text: '#ede9fe' },
   1000: { bg: '#92400e', border: '#ca8a04', text: '#fde68a' },
   500:  { bg: '#1e3a5f', border: '#3b82f6', text: '#93c5fd' },
   250:  { bg: '#1f2937', border: '#6b7280', text: '#d1d5db' },
