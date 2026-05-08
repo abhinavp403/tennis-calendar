@@ -15,9 +15,9 @@ A desktop app built with **Electron + React + Vite** that displays the full 2026
 - ✅ **Match results on hover** — completed tournaments show the winner, runner-up, and final score
 - 📋 **Month summary dialog** — a "Results" button opens a summary of all completed tournaments for that month
 - 📈 **Player Stats (YTD)** — a cumulative year-to-date tally of every player's wins and runner-up finishes from January through the current month, sorted by wins
-- 📊 **Monthly rankings** — a "Rankings" button shows the top 32 ATP/WTA players at end of each completed month, with points and ▲▼ movement indicators vs. the previous month
+- 📊 **Monthly rankings** — a "Rankings" button shows the top 20 ATP/WTA players at end of each completed month, with points and ▲▼ movement indicators vs. the previous month
 - 🔵🩷 **ATP / WTA toggle** — switch between the men's and women's tour instantly
-- 🎨 **Vibrant dark theme** — colour-coded by tournament level (Grand Slam / 1000 / 500 / 250) with glows and gradients
+- 🎨 **Vibrant dark theme** — colour-coded by tournament level (Grand Slam / 1500 / 1000 / 500 / 250) with glows and gradients
 
 ---
 
@@ -26,6 +26,7 @@ A desktop app built with **Electron + React + Vite** that displays the full 2026
 | Level | Colour | Examples |
 |-------|--------|---------|
 | **Grand Slam** | 🟣 Violet | Australian Open, Roland Garros, Wimbledon, US Open |
+| **1500** | 🟣 Violet | ATP Finals, WTA Finals |
 | **1000** | 🟡 Amber | Indian Wells, Miami, Madrid |
 | **500** | 🔵 Blue | Dubai, Rotterdam, Dallas |
 | **250** | ⚪ Grey | Adelaide, Hobart, Delray Beach |
@@ -76,7 +77,7 @@ npm run build
 
 ---
 
-## Downloading the App (No Setup Required)
+## Downloading the App
 
 Pre-built installers can be generated via GitHub Actions (triggered manually from the Actions tab).
 
