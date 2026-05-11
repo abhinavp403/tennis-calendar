@@ -96,6 +96,27 @@ Pre-built installers can be generated via GitHub Actions (triggered manually fro
 3. Download the **Tennis-Calendar-Windows** artifact (`.exe`)
 4. Run the installer — Windows may show a SmartScreen warning; click **More info → Run anyway**
 
+### Calendar file (.ics) — import into Google / Apple / Outlook
+
+Prefer to view the schedule inside your own calendar app instead of running the desktop app? Use the generated `.ics` file.
+
+**One-time download (static snapshot):**
+
+- Download [`tennis_calendar.ics`](./tennis_calendar.ics) from this repo
+- Google Calendar: Settings → Import & export → **Import** → select the file
+- Apple Calendar: double-click the file
+- Outlook: File → Open & Export → Import/Export
+
+**Subscribe by URL (auto-updates when winners are added):**
+
+```
+https://abhinavp403.github.io/tennis-calendar/tennis_calendar.ics
+```
+
+In Google Calendar: left sidebar → **Other calendars** (+) → **From URL** → paste the link above.
+
+Each tournament appears as a single all-day event on its final day, titled like `[ATP - 1000] Italian Open`. Surface, location, dates, and final results live in the event description.
+
 ---
 
 ## Data
