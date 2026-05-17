@@ -7,6 +7,7 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import { updateGist } from './updateGist.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_PATH = path.join(__dirname, '../data/rankings.json');
@@ -205,6 +206,7 @@ export async function fetchMissingRankings(dataPath = DATA_PATH) {
 
     writeFileSync(dataPath, JSON.stringify(data, null, 2) + '\n');
     console.log('rankings.json updated.');
+    await updateGist({ 'rankings.json': dataPath });
   }
 
   return updated;

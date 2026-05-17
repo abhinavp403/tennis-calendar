@@ -6,6 +6,7 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import { updateGist } from './updateGist.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_PATH = path.join(__dirname, '../data/tournaments.json');
@@ -180,6 +181,7 @@ export async function fetchMissingResults(dataPath = DATA_PATH) {
   if (updated) {
     writeFileSync(dataPath, JSON.stringify(data, null, 2) + '\n');
     console.log('tournaments.json updated with new results.');
+    await updateGist({ 'tournaments.json': dataPath });
   } else {
     console.log('No missing results to update.');
   }

@@ -13,7 +13,7 @@ const DATE_CHECK_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 let lastRunPath = null;  // set after app is ready
 let initialized = false; // gate for the activate handler
 
-const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/abhinavp403/tennis-calendar/main/data';
+const GIST_RAW_BASE = 'https://gist.githubusercontent.com/aprakash101/d5fd27e0bbf59cefbc4aebb03e589d00/raw';
 
 async function syncUserData() {
   const userDataDir = app.getPath('userData');
@@ -30,16 +30,16 @@ async function syncUserData() {
   // Pull latest committed data from GitHub (silent fail if offline)
   try {
     for (const file of ['tournaments.json', 'rankings.json']) {
-      const res = await fetch(`${GITHUB_RAW_BASE}/${file}`, { signal: AbortSignal.timeout(8000) });
+      const res = await fetch(`${GIST_RAW_BASE}/${file}`, { signal: AbortSignal.timeout(8000) });
       if (res.ok) {
         const text = await res.text();
         JSON.parse(text); // validate before writing
         writeFileSync(path.join(userDataDir, file), text);
       }
     }
-    console.log('Synced latest data from GitHub.');
+    console.log('Synced latest data from Gist.');
   } catch {
-    console.log('GitHub sync skipped (offline or timeout) — using local data.');
+    console.log('Gist sync skipped (offline or timeout) — using local data.');
   }
 
   // Expose path so preload can read from userData instead of the app bundle
