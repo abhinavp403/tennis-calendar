@@ -932,7 +932,10 @@
       "end": "2026-05-16",
       "location": "Rome, Italy",
       "surface": "Clay",
-      "logo": "wta_italian_open.png"
+      "logo": "wta_italian_open.png",
+      "winner": "E. Svitolina",
+      "runner_up": "C. Gauff",
+      "score": "6–4, 6–7(3–7), 6–2"
     },
     {
       "id": "wta-strasbourg-2026",
