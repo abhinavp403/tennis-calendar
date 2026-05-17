@@ -1,18 +1,54 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import dayjs from 'dayjs';
 import Calendar from './components/Calendar.jsx';
 import AppLogo from './components/AppLogo.jsx';
 
-// In Electron, data is read from userData (synced from Gist on launch).
-// In browser/dev mode, falls back to empty structures.
-const tournamentData = window.electronAPI?.getTournaments() ?? { atp: [], wta: [] };
-const rankingsData = window.electronAPI?.getRankings?.() ?? { atp: {}, wta: {} };
+function readData() {
+  return {
+    tournaments: window.electronAPI?.getTournaments() ?? { atp: [], wta: [] },
+    rankings: window.electronAPI?.getRankings?.() ?? { atp: {}, wta: {} },
+  };
+}
+
+function formatSyncTime(iso) {
+  if (!iso) return null;
+  const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
+  if (diff < 60) return 'Just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return dayjs(iso).format('MMM D, h:mm A');
+}
 
 export default function App() {
   const [tour, setTour] = useState('atp');
   const [currentDate, setCurrentDate] = useState(dayjs());
+  const [data, setData] = useState(() => readData());
+  const [lastSynced, setLastSynced] = useState(() => window.electronAPI?.getSyncTime?.() ?? null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncLabel, setSyncLabel] = useState(() => formatSyncTime(window.electronAPI?.getSyncTime?.() ?? null));
 
-  const tournaments = tour === 'atp' ? tournamentData.atp : tournamentData.wta;
+  // Keep "X min ago" label fresh
+  useEffect(() => {
+    const interval = setInterval(() => setSyncLabel(formatSyncTime(lastSynced)), 30000);
+    return () => clearInterval(interval);
+  }, [lastSynced]);
+
+  const handleRefresh = useCallback(async () => {
+    if (isSyncing || !window.electronAPI?.triggerSync) return;
+    setIsSyncing(true);
+    try {
+      await window.electronAPI.triggerSync();
+      const now = new Date().toISOString();
+      setData(readData());
+      setLastSynced(now);
+      setSyncLabel(formatSyncTime(now));
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [isSyncing]);
+
+  const tournaments = tour === 'atp' ? data.tournaments.atp : data.tournaments.wta;
+  const rankingsData = data.rankings;
 
   const prevMonth = () => setCurrentDate(d => d.subtract(1, 'month'));
   const nextMonth = () => setCurrentDate(d => d.add(1, 'month'));
@@ -21,6 +57,7 @@ export default function App() {
   const monthLabel = currentDate.format('MMMM YYYY');
   const isAtp = tour === 'atp';
   const isMinMonth = currentDate.year() === 2026 && currentDate.month() === 0;
+  const accentColor = isAtp ? '#3388ff' : '#e060aa';
 
   return (
     <div
@@ -117,8 +154,8 @@ export default function App() {
           </button>
         </div>
 
-        {/* Right spacer with tour badge */}
-        <div className="w-36 flex justify-end">
+        {/* Right: tour badge + sync */}
+        <div className="flex flex-col items-end gap-1" style={{ minWidth: '140px' }}>
           <span
             className="text-xs font-bold tracking-widest px-3 py-1 rounded-full"
             style={{
@@ -132,6 +169,33 @@ export default function App() {
           >
             {tour.toUpperCase()} TOUR
           </span>
+          <div className="flex items-center gap-2">
+            {syncLabel && (
+              <span style={{ fontSize: '10px', color: '#4b5580' }}>
+                {syncLabel}
+              </span>
+            )}
+            <button
+              onClick={handleRefresh}
+              disabled={isSyncing}
+              title="Sync latest data"
+              style={{
+                background: 'none',
+                border: 'none',
+                color: isSyncing ? accentColor : '#4b5580',
+                cursor: isSyncing ? 'default' : 'pointer',
+                fontSize: '13px',
+                padding: '2px 4px',
+                borderRadius: '4px',
+                transition: 'color 0.15s',
+                animation: isSyncing ? 'spin 1s linear infinite' : 'none',
+              }}
+              onMouseEnter={e => { if (!isSyncing) e.currentTarget.style.color = accentColor; }}
+              onMouseLeave={e => { if (!isSyncing) e.currentTarget.style.color = '#4b5580'; }}
+            >
+              ↻
+            </button>
+          </div>
         </div>
       </header>
 

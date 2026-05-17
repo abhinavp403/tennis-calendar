@@ -12,6 +12,8 @@ const DATE_CHECK_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 let lastRunPath = null;  // set after app is ready
 let initialized = false; // gate for the activate handler
+let lastSyncTime = null;
+let isSyncing = false;
 
 const GIST_RAW_BASE = 'https://gist.githubusercontent.com/abhinavp403/c75d3f961da94fdeed16cdbd8e2ec08e/raw';
 
@@ -125,6 +127,7 @@ function createWindow() {
 app.whenReady().then(async () => {
   lastRunPath = path.join(app.getPath('userData'), 'lastDateCheck.json');
   await syncUserData();
+  lastSyncTime = new Date().toISOString();
 
   // Serve data files via IPC so preload can read them reliably
   const userDataDir = app.getPath('userData');
@@ -133,6 +136,27 @@ app.whenReady().then(async () => {
       event.returnValue = readFileSync(path.join(userDataDir, file), 'utf-8');
     } catch {
       event.returnValue = file.includes('rankings') ? '{"atp":{},"wta":{}}' : '{"atp":[],"wta":[]}';
+    }
+  });
+
+  ipcMain.on('get-sync-time', (event) => {
+    event.returnValue = lastSyncTime;
+  });
+
+  ipcMain.handle('sync-data', async () => {
+    if (isSyncing) return { updated: false };
+    isSyncing = true;
+    try {
+      await syncUserData();
+      lastSyncTime = new Date().toISOString();
+      const tournamentsPath = path.join(userDataDir, 'tournaments.json');
+      const rankingsPath = path.join(userDataDir, 'rankings.json');
+      let updated = false;
+      updated = (await fetchMissingResults(tournamentsPath)) || updated;
+      updated = (await fetchMissingRankings(rankingsPath)) || updated;
+      return { updated };
+    } finally {
+      isSyncing = false;
     }
   });
 
