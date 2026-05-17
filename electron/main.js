@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import { existsSync, writeFileSync, mkdirSync } from 'fs';
+import { existsSync, writeFileSync, mkdirSync, readFileSync } from 'fs';
 import { fetchMissingResults } from '../scripts/fetchResults.js';
 import { fixTournamentDates } from '../scripts/fixDates.js';
 import { fetchMissingRankings } from '../scripts/fetchRankings.js';
@@ -13,7 +13,7 @@ const DATE_CHECK_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 let lastRunPath = null;  // set after app is ready
 let initialized = false; // gate for the activate handler
 
-const GIST_RAW_BASE = 'https://gist.githubusercontent.com/aprakash101/d5fd27e0bbf59cefbc4aebb03e589d00/raw';
+const GIST_RAW_BASE = 'https://gist.githubusercontent.com/abhinavp403/c75d3f961da94fdeed16cdbd8e2ec08e/raw';
 
 async function syncUserData() {
   const userDataDir = app.getPath('userData');
@@ -43,8 +43,7 @@ async function syncUserData() {
     console.log('Gist sync skipped (offline or timeout) — using local data.');
   }
 
-  // Expose path so preload can read from userData
-  process.env.USER_DATA_PATH = userDataDir;
+  // userData path is passed to the renderer via IPC (see get-data handler)
 }
 
 function shouldRunDateCheck() {
@@ -62,7 +61,6 @@ function recordDateCheckRun() {
 }
 
 function createWindow() {
-  const distIndex = path.join(__dirname, '../dist/index.html');
   const isDev = process.env.ELECTRON_DEV === 'true' || (!app.isPackaged && !existsSync(distIndex));
 
   const win = new BrowserWindow({
@@ -127,6 +125,17 @@ function createWindow() {
 app.whenReady().then(async () => {
   lastRunPath = path.join(app.getPath('userData'), 'lastDateCheck.json');
   await syncUserData();
+
+  // Serve data files via IPC so preload can read them reliably
+  const userDataDir = app.getPath('userData');
+  ipcMain.on('get-data', (event, file) => {
+    try {
+      event.returnValue = readFileSync(path.join(userDataDir, file), 'utf-8');
+    } catch {
+      event.returnValue = file.includes('rankings') ? '{"atp":{},"wta":{}}' : '{"atp":[],"wta":[]}';
+    }
+  });
+
   initialized = true;
   createWindow();
 });

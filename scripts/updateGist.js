@@ -6,7 +6,7 @@
 import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 
-const GIST_ID = 'd5fd27e0bbf59cefbc4aebb03e589d00';
+const GIST_ID = 'c75d3f961da94fdeed16cdbd8e2ec08e';
 
 function getGhToken() {
   try {
