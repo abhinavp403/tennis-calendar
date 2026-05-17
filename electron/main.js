@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { existsSync, writeFileSync, mkdirSync } from 'fs';
 import { fetchMissingResults } from '../scripts/fetchResults.js';
 import { fixTournamentDates } from '../scripts/fixDates.js';
 import { fetchMissingRankings } from '../scripts/fetchRankings.js';
@@ -19,15 +19,16 @@ async function syncUserData() {
   const userDataDir = app.getPath('userData');
   mkdirSync(userDataDir, { recursive: true });
 
-  // Seed userData from bundled files on first launch
+  const EMPTY = { 'tournaments.json': '{"atp":[],"wta":[]}', 'rankings.json': '{"atp":{},"wta":{}}' };
+
+  // Ensure userData files exist (empty structure if Gist unreachable on first launch)
   for (const file of ['tournaments.json', 'rankings.json']) {
-    const userPath = path.join(userDataDir, file);
-    if (!existsSync(userPath)) {
-      writeFileSync(userPath, readFileSync(path.join(__dirname, '../data', file)));
+    if (!existsSync(path.join(userDataDir, file))) {
+      writeFileSync(path.join(userDataDir, file), EMPTY[file]);
     }
   }
 
-  // Pull latest committed data from GitHub (silent fail if offline)
+  // Pull latest data from Gist (silent fail if offline)
   try {
     for (const file of ['tournaments.json', 'rankings.json']) {
       const res = await fetch(`${GIST_RAW_BASE}/${file}`, { signal: AbortSignal.timeout(8000) });
@@ -42,7 +43,7 @@ async function syncUserData() {
     console.log('Gist sync skipped (offline or timeout) — using local data.');
   }
 
-  // Expose path so preload can read from userData instead of the app bundle
+  // Expose path so preload can read from userData
   process.env.USER_DATA_PATH = userDataDir;
 }
 

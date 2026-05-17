@@ -2,13 +2,11 @@ import { useState } from 'react';
 import dayjs from 'dayjs';
 import Calendar from './components/Calendar.jsx';
 import AppLogo from './components/AppLogo.jsx';
-import staticTournamentData from '../data/tournaments.json';
-import staticRankingsData from '../data/rankings.json';
 
-// In Electron, use live data from disk (kept up-to-date by main process).
-// In browser/dev, fall back to the bundled static import.
-const tournamentData = window.electronAPI?.getTournaments() ?? staticTournamentData;
-const rankingsData = window.electronAPI?.getRankings?.() ?? staticRankingsData;
+// In Electron, data is read from userData (synced from Gist on launch).
+// In browser/dev mode, falls back to empty structures.
+const tournamentData = window.electronAPI?.getTournaments() ?? { atp: [], wta: [] };
+const rankingsData = window.electronAPI?.getRankings?.() ?? { atp: {}, wta: {} };
 
 export default function App() {
   const [tour, setTour] = useState('atp');
