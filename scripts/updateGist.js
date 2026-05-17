@@ -9,6 +9,10 @@ import { readFileSync } from 'fs';
 const GIST_ID = 'c75d3f961da94fdeed16cdbd8e2ec08e';
 
 function getGhToken() {
+  // In CI/GitHub Actions, token is passed via environment variable
+  if (process.env.GH_TOKEN) return process.env.GH_TOKEN;
+  if (process.env.GITHUB_TOKEN) return process.env.GITHUB_TOKEN;
+  // On local machine, use gh CLI
   try {
     return execSync('gh auth token', { stdio: ['pipe', 'pipe', 'pipe'] }).toString().trim();
   } catch {

@@ -1,0 +1,38 @@
+name: Update Tennis Data
+
+on:
+  schedule:
+    - cron: '0 10 * * *'  # Daily at 10am UTC (6am ET)
+  workflow_dispatch:       # Allow manual trigger from Actions tab
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Download current data from Gist
+        run: |
+          mkdir -p data
+          curl -sf "https://gist.githubusercontent.com/abhinavp403/c75d3f961da94fdeed16cdbd8e2ec08e/raw/tournaments.json" > data/tournaments.json
+          curl -sf "https://gist.githubusercontent.com/abhinavp403/c75d3f961da94fdeed16cdbd8e2ec08e/raw/rankings.json" > data/rankings.json
+
+      - name: Fix tournament dates
+        run: node scripts/fixDates.js
+        env:
+          GH_TOKEN: ${{ secrets.GIST_TOKEN }}
+
+      - name: Fetch missing results
+        run: node scripts/fetchResults.js
+        env:
+          GH_TOKEN: ${{ secrets.GIST_TOKEN }}
+
+      - name: Fetch missing rankings
+        run: node scripts/fetchRankings.js
+        env:
+          GH_TOKEN: ${{ secrets.GIST_TOKEN }}
