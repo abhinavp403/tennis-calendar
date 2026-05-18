@@ -98,7 +98,19 @@ Pre-built installers can be generated via GitHub Actions (triggered manually fro
 
 ### Calendar file (.ics) — import into Google / Apple / Outlook
 
-Prefer to view the schedule inside your own calendar app instead of running the desktop app? Use the generated `.ics` file.
+Prefer to view the schedule inside your own calendar app instead of running the desktop app? Subscribe to the live `.ics` feed — results fill in automatically as tournaments complete throughout the season.
+
+**Subscribe by URL (recommended — auto-updates with results):**
+
+```
+https://raw.githubusercontent.com/abhinavp403/tennis-calendar/main/tennis_calendar.ics
+```
+
+- **Google Calendar**: left sidebar → **Other calendars** (+) → **From URL** → paste the link above
+- **Apple Calendar**: File → New Calendar Subscription → paste the link above
+- **Outlook**: Add calendar → From internet → paste the link above
+
+The file is regenerated daily by a GitHub Actions workflow. When a tournament finishes, results (winner, runner-up, score) appear in the event description within ~24 hours.
 
 **One-time download (static snapshot):**
 
@@ -107,21 +119,13 @@ Prefer to view the schedule inside your own calendar app instead of running the 
 - Apple Calendar: double-click the file
 - Outlook: File → Open & Export → Import/Export
 
-**Subscribe by URL (auto-updates when winners are added):**
-
-```
-https://abhinavp403.github.io/tennis-calendar/tennis_calendar.ics
-```
-
-In Google Calendar: left sidebar → **Other calendars** (+) → **From URL** → paste the link above.
-
 Each tournament appears as a single all-day event on its final day, titled like `[ATP - 1000] Italian Open`. Surface, location, dates, and final results live in the event description.
 
 ---
 
 ## Data
 
-Tournament data lives in `data/tournaments.json` and includes fields for every event:
+Tournament data is stored in a [GitHub Gist](https://gist.github.com/abhinavp403/c75d3f961da94fdeed16cdbd8e2ec08e) and includes fields for every event:
 
 ```json
 {
@@ -139,4 +143,4 @@ Tournament data lives in `data/tournaments.json` and includes fields for every e
 }
 ```
 
-Results (`winner`, `runner_up`, `score`) are populated for all completed tournaments sourced from Wikipedia.
+Results (`winner`, `runner_up`, `score`) are populated for all completed tournaments sourced from Wikipedia. A daily GitHub Actions workflow scrapes new results and pushes updates to the Gist automatically.
