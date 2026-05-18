@@ -36,3 +36,16 @@ jobs:
         run: node scripts/fetchRankings.js
         env:
           GH_TOKEN: ${{ secrets.GIST_TOKEN }}
+
+      - name: Regenerate ICS calendar
+        run: python scripts/export_ics.py
+
+      - name: Commit updated ICS to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tennis_calendar.ics
+          git diff --cached --quiet || git commit -m "chore: regenerate tennis_calendar.ics with latest results
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+          git push

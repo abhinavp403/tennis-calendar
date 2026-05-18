@@ -1,5 +1,7 @@
 """
-Generate tennis_calendar.ics from data/tournaments.json.
+Generate tennis_calendar.ics from tournaments data.
+Fetches latest data from the GitHub Gist, falling back to a local
+data/tournaments.json if the Gist is unreachable.
 Produces one all-day event per tournament, compatible with
 Google Calendar, Apple Calendar, Outlook, and any iCal-compliant app.
 
@@ -8,12 +10,27 @@ Output: tennis_calendar.ics (project root)
 """
 
 import json
+import urllib.request
 import uuid
 from datetime import datetime, date, timedelta
 from pathlib import Path
 
+GIST_URL = "https://gist.githubusercontent.com/abhinavp403/c75d3f961da94fdeed16cdbd8e2ec08e/raw/tournaments.json"
 DATA_FILE = Path(__file__).parent.parent / "data" / "tournaments.json"
 OUT_FILE = Path(__file__).parent.parent / "tennis_calendar.ics"
+
+
+def load_data() -> dict:
+    try:
+        req = urllib.request.Request(GIST_URL, headers={"User-Agent": "TennisCalendarApp/1.0"})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode())
+            print("Fetched data from Gist")
+            return data
+    except Exception as e:
+        print(f"Gist fetch failed ({e}), falling back to local file")
+        with open(DATA_FILE) as f:
+            return json.load(f)
 
 LEVEL_LABELS = {
     2000: "Grand Slam",
@@ -111,8 +128,7 @@ def build_event(tour: str, t: dict, now_stamp: str) -> list[str]:
 
 
 def main():
-    with open(DATA_FILE) as f:
-        data = json.load(f)
+    data = load_data()
 
     now_stamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
 
