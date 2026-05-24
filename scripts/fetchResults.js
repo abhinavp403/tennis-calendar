@@ -62,8 +62,8 @@ function cleanScore(raw) {
 }
 
 function extractFromInfobox(wikitext) {
-  // Parse | champ = / | champion = and | runner = / | runner-up = from infobox
-  const champMatch = wikitext.match(/\|\s*(?:champ|champion)\s*=\s*(?:\{\{[^}]+\}\}\s*)*\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/i);
+  // Parse | champ = / | champs = / | champion = and | runner = / | runner-up = from infobox
+  const champMatch = wikitext.match(/\|\s*(?:champs?|champion)\s*=\s*(?:\{\{[^}]+\}\}\s*)*\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/i);
   const runnerMatch = wikitext.match(/\|\s*(?:runner|runner-up)\s*=\s*(?:\{\{[^}]+\}\}\s*)*\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/i);
   const scoreMatch = wikitext.match(/\|\s*score\s*=\s*([^\n|]+)/i);
 
@@ -118,28 +118,52 @@ function extractSinglesResult(wikitext) {
   return { winner, runner_up: runnerUp, score };
 }
 
+const WIKI_API_DELAY = 500; // ms between Wikipedia API calls to avoid rate limiting
+const delay = ms => new Promise(r => setTimeout(r, ms));
+
 async function fetchResultForTournament(tournament, tour) {
   const year = tournament.start.slice(0, 4);
   const singlesLabel = tour === 'wta' ? "Women's singles" : "Men's singles";
 
-  // Queries ordered from most specific (dedicated singles page) to fallback (main page)
-  const queries = [
-    `${year} ${tournament.name} ${singlesLabel}`,
-    `${year} ${tournament.name} tennis`,
+  // Try direct page title fetches first — more reliable than search, no false matches
+  const directTitles = [
+    `${year} ${tournament.name} \u2013 ${singlesLabel}`,
+    `${year} ${tournament.name} \u2013 Singles`,
     `${year} ${tournament.name}`,
   ];
 
-  for (const query of queries) {
+  for (const title of directTitles) {
+    await delay(WIKI_API_DELAY);
+    const wikitext = await getWikitext(title);
+    if (!wikitext) continue;
+    const result = extractSinglesResult(wikitext);
+    if (result) {
+      console.log(`  ✓ ${tournament.name}: ${result.winner} def. ${result.runner_up} ${result.score}`);
+      return result;
+    }
+  }
+
+  // Fall back to search, but validate candidate title contains tournament name keywords
+  // to prevent false matches (e.g. Italian Open page returned for Geneva Open query)
+  const nameKeywords = tournament.name.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+  const titleMatches = r => nameKeywords.some(k => r.title.toLowerCase().includes(k));
+
+  const searchQueries = [
+    `${year} ${tournament.name} ${singlesLabel}`,
+    `${year} ${tournament.name} tennis`,
+  ];
+
+  for (const query of searchQueries) {
+    await delay(WIKI_API_DELAY);
     const results = await searchWikipedia(query);
 
-    // Prefer a dedicated singles sub-page (title contains " – " and "singles")
-    // Fall back to main tournament page (has year, no " – ")
     const candidate =
-      results.find(r => r.title.includes(year) && / – /i.test(r.title) && /singles/i.test(r.title)) ||
-      results.find(r => r.title.includes(year) && !r.title.includes(' – '));
+      results.find(r => r.title.includes(year) && / – /i.test(r.title) && /singles/i.test(r.title) && titleMatches(r)) ||
+      results.find(r => r.title.includes(year) && !r.title.includes(' – ') && titleMatches(r));
 
     if (!candidate) continue;
 
+    await delay(WIKI_API_DELAY);
     const wikitext = await getWikitext(candidate.title);
     if (!wikitext) continue;
 
