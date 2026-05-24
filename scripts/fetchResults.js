@@ -157,20 +157,35 @@ async function fetchResultForTournament(tournament, tour) {
 export async function fetchMissingResults(dataPath = DATA_PATH) {
   const data = JSON.parse(readFileSync(dataPath, 'utf-8'));
   const today = new Date().toISOString().slice(0, 10);
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   let updated = false;
 
   for (const tour of ['atp', 'wta']) {
     for (const tournament of data[tour]) {
-      if (tournament.winner || tournament.end >= today) continue;
+      if (tournament.end >= today) continue;
 
-      console.log(`Fetching result for: ${tournament.name} (${tournament.end})`);
+      // Skip tournaments completed more than 30 days ago that already have a result
+      const recentlyCompleted = tournament.end >= thirtyDaysAgo;
+      if (tournament.winner && !recentlyCompleted) continue;
+
+      const action = tournament.winner ? 'Re-verifying' : 'Fetching';
+      console.log(`${action} result for: ${tournament.name} (${tournament.end})`);
       try {
         const result = await fetchResultForTournament(tournament, tour);
         if (result) {
-          tournament.winner = result.winner;
-          tournament.runner_up = result.runner_up;
-          tournament.score = result.score;
-          updated = true;
+          const changed =
+            tournament.winner !== result.winner ||
+            tournament.runner_up !== result.runner_up ||
+            tournament.score !== result.score;
+          if (changed) {
+            if (tournament.winner) {
+              console.log(`  ↻ Corrected: was ${tournament.winner} def. ${tournament.runner_up} ${tournament.score}`);
+            }
+            tournament.winner = result.winner;
+            tournament.runner_up = result.runner_up;
+            tournament.score = result.score;
+            updated = true;
+          }
         }
       } catch (err) {
         console.error(`  Error fetching ${tournament.name}:`, err.message);
