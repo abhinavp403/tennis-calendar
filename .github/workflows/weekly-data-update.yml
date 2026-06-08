@@ -28,6 +28,20 @@ jobs:
         with:
           node-version: 20
 
+      - name: Bootstrap data/ from Gist if missing
+        run: |
+          mkdir -p data
+          BASE="https://gist.githubusercontent.com/abhinavp403/c75d3f961da94fdeed16cdbd8e2ec08e/raw"
+          for f in tournaments.json rankings.json; do
+            if [ ! -f "data/$f" ]; then
+              echo "Fetching data/$f from Gist..."
+              curl -fsSL "$BASE/$f" -o "data/$f"
+            fi
+          done
+          # Sanity-check that we got valid JSON
+          node -e "JSON.parse(require('fs').readFileSync('data/tournaments.json'))"
+          node -e "JSON.parse(require('fs').readFileSync('data/rankings.json'))"
+
       - name: Fix tournament dates
         run: node scripts/fixDates.js
         env:
