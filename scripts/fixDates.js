@@ -15,7 +15,7 @@ import path from 'path';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_PATH = path.join(__dirname, '../data/tournaments.json');
-const UA = 'TennisCalendar/1.0 (https://github.com/abhinavp403/tennis-calendar; abhinavp403@gmail.com) node-fetch';
+const UA = 'TennisCalendar/1.0 (https://github.com/abhinavp403/tennis-calendar; noreply@github.com) node-fetch';
 
 // Only check tournaments ending within this many days from today
 const LOOKAHEAD_DAYS = 14;
