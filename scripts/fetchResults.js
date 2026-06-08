@@ -10,13 +10,14 @@ import { updateGist } from './updateGist.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_PATH = path.join(__dirname, '../data/tournaments.json');
+const UA = 'TennisCalendar/1.0 (https://github.com/abhinavp403/tennis-calendar; abhinavp403@gmail.com) node-fetch';
 
 async function searchWikipedia(query) {
   const url =
     'https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=' +
     encodeURIComponent(query) +
     '&format=json&srlimit=5';
-  const res = await fetch(url, { headers: { 'User-Agent': 'TennisCalendarApp/1.0' } });
+  const res = await fetch(url, { headers: { 'User-Agent': UA } });
   const data = await res.json();
   return data.query?.search ?? [];
 }
@@ -26,7 +27,7 @@ async function getWikitext(title) {
     'https://en.wikipedia.org/w/api.php?action=query&titles=' +
     encodeURIComponent(title) +
     '&prop=revisions&rvprop=content&format=json&rvslots=main';
-  const res = await fetch(url, { headers: { 'User-Agent': 'TennisCalendarApp/1.0' } });
+  const res = await fetch(url, { headers: { 'User-Agent': UA } });
   const data = await res.json();
   const page = Object.values(data.query?.pages ?? {})[0];
   return page?.revisions?.[0]?.slots?.main?.['*'] ?? '';

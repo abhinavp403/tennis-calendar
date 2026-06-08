@@ -15,6 +15,7 @@ import path from 'path';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_PATH = path.join(__dirname, '../data/tournaments.json');
+const UA = 'TennisCalendar/1.0 (https://github.com/abhinavp403/tennis-calendar; abhinavp403@gmail.com) node-fetch';
 
 // Only check tournaments ending within this many days from today
 const LOOKAHEAD_DAYS = 14;
@@ -53,7 +54,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function wikiApiGet(params) {
   const url = 'https://en.wikipedia.org/w/api.php?' + new URLSearchParams({ format: 'json', ...params });
-  const res = await fetch(url, { headers: { 'User-Agent': 'TennisCalendarApp/1.0' } });
+  const res = await fetch(url, { headers: { 'User-Agent': UA } });
   const text = await res.text();
   if (text.trimStart().startsWith('<')) throw new Error('Wikipedia returned HTML (possibly rate limited)');
   return JSON.parse(text);
