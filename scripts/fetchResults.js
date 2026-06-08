@@ -12,6 +12,38 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_PATH = path.join(__dirname, '../data/tournaments.json');
 const UA = 'TennisCalendar/1.0 (https://github.com/abhinavp403/tennis-calendar; noreply@github.com) node-fetch';
 
+/**
+ * Some tournaments use a different name on Wikipedia than in our data.
+ * Keys are substrings of tournament.name (lowercase), values are the Wikipedia page name.
+ * Tour-specific overrides can be expressed as { atp, wta } objects.
+ */
+const WIKI_NAME_MAP = {
+  'roland garros': 'French Open',
+  'morocco open': { atp: 'Grand Prix Hassan II', wta: 'Grand Prix SAR La Princesse Lalla Meryem' },
+  'italian open': "Internazionali BNL d'Italia",
+  'madrid open': 'Mutua Madrid Open',
+  'canadian open': 'Canadian Open',
+  'cincinnat': 'Cincinnati Open',
+  'paris masters': 'Paris Masters',
+  'stuttgart open': 'Porsche Tennis Grand Prix',
+  'porsche tennis': 'Porsche Tennis Grand Prix',
+  'queen\'s club': "Queen's Club Championships",
+  'libéma open': 'Libéma Open',
+  'shanghai masters': 'Shanghai Masters',
+  'china open': 'China Open',
+};
+
+function getWikiName(tournament, tour) {
+  const name = tournament.name.toLowerCase();
+  for (const [key, value] of Object.entries(WIKI_NAME_MAP)) {
+    if (name.includes(key)) {
+      if (typeof value === 'string') return value;
+      return value[tour] || tournament.name;
+    }
+  }
+  return tournament.name;
+}
+
 async function searchWikipedia(query) {
   const url =
     'https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=' +
@@ -125,13 +157,22 @@ const delay = ms => new Promise(r => setTimeout(r, ms));
 async function fetchResultForTournament(tournament, tour) {
   const year = tournament.start.slice(0, 4);
   const singlesLabel = tour === 'wta' ? "Women's singles" : "Men's singles";
+  const wikiName = getWikiName(tournament, tour);
 
   // Try direct page title fetches first — more reliable than search, no false matches
   const directTitles = [
-    `${year} ${tournament.name} \u2013 ${singlesLabel}`,
-    `${year} ${tournament.name} \u2013 Singles`,
-    `${year} ${tournament.name}`,
+    `${year} ${wikiName} \u2013 ${singlesLabel}`,
+    `${year} ${wikiName} \u2013 Singles`,
+    `${year} ${wikiName}`,
   ];
+  // Fallback to the local name if the mapping is wrong/missing
+  if (wikiName !== tournament.name) {
+    directTitles.push(
+      `${year} ${tournament.name} \u2013 ${singlesLabel}`,
+      `${year} ${tournament.name} \u2013 Singles`,
+      `${year} ${tournament.name}`,
+    );
+  }
 
   for (const title of directTitles) {
     await delay(WIKI_API_DELAY);
@@ -150,6 +191,8 @@ async function fetchResultForTournament(tournament, tour) {
   const titleMatches = r => nameKeywords.some(k => r.title.toLowerCase().includes(k));
 
   const searchQueries = [
+    `${year} ${wikiName} ${singlesLabel}`,
+    `${year} ${wikiName} tennis`,
     `${year} ${tournament.name} ${singlesLabel}`,
     `${year} ${tournament.name} tennis`,
   ];
