@@ -1,0 +1,56 @@
+name: Weekly Data Update
+
+# Fetches tournament results and rankings from Wikipedia, then pushes
+# updated tournaments.json / rankings.json to both the Gist (which the
+# app reads at launch) and back to this repo (which keeps tennis_calendar.ics
+# in sync via the update-ics workflow).
+
+on:
+  schedule:
+    # Daily at 09:00 UTC — Wikipedia usually has weekend results by then.
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: weekly-data-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Fix tournament dates
+        run: node scripts/fixDates.js
+        env:
+          GH_TOKEN: ${{ secrets.GIST_TOKEN }}
+
+      - name: Fetch missing results
+        run: node scripts/fetchResults.js
+        env:
+          GH_TOKEN: ${{ secrets.GIST_TOKEN }}
+
+      - name: Fetch missing rankings
+        run: node scripts/fetchRankings.js
+        env:
+          GH_TOKEN: ${{ secrets.GIST_TOKEN }}
+
+      - name: Commit updated data back to repo
+        run: |
+          if git diff --quiet -- data/; then
+            echo "No changes to data files"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git commit -m "Auto-update tournament data and rankings"
+          git push
