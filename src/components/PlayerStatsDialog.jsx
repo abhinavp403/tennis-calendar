@@ -1,6 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function PlayerStatsDialog({ monthLabel, completedTournaments, tour, onClose }) {
+  const [hoveredPlayer, setHoveredPlayer] = useState(null);
+
   useEffect(() => {
     const handler = e => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handler);
@@ -9,20 +11,31 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
 
   const accentColor = tour === 'atp' ? '#0066cc' : '#be398d';
 
-  // Aggregate player stats: name → {wins, runnerUp}
+  const levelLabel = level => {
+    if (level === 2000) return 'Grand Slam';
+    if (level === 1500) return 'Finals';
+    if (level === 1000 || level === 500 || level === 250) return String(level);
+    return level != null ? String(level) : '';
+  };
+
+  // Aggregate player stats: name → {wins, runnerUp, winsList, runnerUpList}
+  // Each list entry is {name, level} so the hover tooltip can show tier alongside title.
   const playerStats = {};
   for (const tournament of completedTournaments) {
+    const entry = { name: tournament.name, level: tournament.level };
     if (tournament.winner) {
       if (!playerStats[tournament.winner]) {
-        playerStats[tournament.winner] = { wins: 0, runnerUp: 0 };
+        playerStats[tournament.winner] = { wins: 0, runnerUp: 0, winsList: [], runnerUpList: [] };
       }
       playerStats[tournament.winner].wins += 1;
+      playerStats[tournament.winner].winsList.push(entry);
     }
     if (tournament.runner_up) {
       if (!playerStats[tournament.runner_up]) {
-        playerStats[tournament.runner_up] = { wins: 0, runnerUp: 0 };
+        playerStats[tournament.runner_up] = { wins: 0, runnerUp: 0, winsList: [], runnerUpList: [] };
       }
       playerStats[tournament.runner_up].runnerUp += 1;
+      playerStats[tournament.runner_up].runnerUpList.push(entry);
     }
   }
 
@@ -33,6 +46,8 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
       wins: data.wins,
       runnerUp: data.runnerUp,
       total: data.wins + data.runnerUp,
+      winsList: data.winsList,
+      runnerUpList: data.runnerUpList,
     }))
     .sort((a, b) => {
       if (b.wins !== a.wins) return b.wins - a.wins;
@@ -114,7 +129,7 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
             flexShrink: 0,
           }}
         >
-          <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px' }}>RANK</span>
+          <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px' }}>#</span>
           <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px' }}>PLAYER</span>
           <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', textAlign: 'center' }}>WINS</span>
           <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', textAlign: 'center' }}>RUNNER-UP</span>
@@ -150,15 +165,71 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
                   {stat.rank}
                 </span>
 
-                {/* Player name */}
+                {/* Player name (with hover tooltip listing tournaments) */}
                 <span
+                  onMouseEnter={() => setHoveredPlayer(stat.name)}
+                  onMouseLeave={() => setHoveredPlayer(null)}
                   style={{
+                    position: 'relative',
                     fontSize: '13px',
                     fontWeight: stat.wins > 0 ? '600' : '500',
                     color: stat.wins > 0 ? 'white' : '#c4c4d4',
+                    cursor: 'default',
+                    width: 'fit-content',
                   }}
                 >
                   {stat.name}
+                  {hoveredPlayer === stat.name && (stat.winsList.length > 0 || stat.runnerUpList.length > 0) && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        marginTop: '6px',
+                        zIndex: 20,
+                        backgroundColor: '#0c0c14',
+                        border: `1px solid ${accentColor}`,
+                        borderRadius: '8px',
+                        padding: '10px 12px',
+                        minWidth: '240px',
+                        maxWidth: '320px',
+                        boxShadow: '0 6px 24px rgba(0,0,0,0.7)',
+                        fontWeight: '500',
+                        pointerEvents: 'none',
+                      }}
+                    >
+                      {stat.winsList.length > 0 && (
+                        <div style={{ marginBottom: stat.runnerUpList.length > 0 ? '8px' : 0 }}>
+                          <div style={{ fontSize: '10px', fontWeight: '700', color: '#fde68a', letterSpacing: '0.5px', marginBottom: '4px' }}>
+                            🏆 WINS ({stat.winsList.length})
+                          </div>
+                          {stat.winsList.map((t, i) => (
+                            <div key={`w-${i}`} style={{ fontSize: '12px', color: '#e5e7eb', lineHeight: '1.5' }}>
+                              {t.name}
+                              {t.level != null && (
+                                <span style={{ color: '#6b7280', fontWeight: '500' }}> · {levelLabel(t.level)}</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {stat.runnerUpList.length > 0 && (
+                        <div>
+                          <div style={{ fontSize: '10px', fontWeight: '700', color: '#9ca3af', letterSpacing: '0.5px', marginBottom: '4px' }}>
+                            🥈 RUNNER-UP ({stat.runnerUpList.length})
+                          </div>
+                          {stat.runnerUpList.map((t, i) => (
+                            <div key={`r-${i}`} style={{ fontSize: '12px', color: '#c4c4d4', lineHeight: '1.5' }}>
+                              {t.name}
+                              {t.level != null && (
+                                <span style={{ color: '#6b7280', fontWeight: '500' }}> · {levelLabel(t.level)}</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </span>
 
                 {/* Wins */}
