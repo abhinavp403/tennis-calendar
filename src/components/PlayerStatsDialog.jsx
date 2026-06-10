@@ -39,6 +39,16 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
       return b.runnerUp - a.runnerUp;
     });
 
+  // Dense rank: ties (same wins AND runnerUp) share a rank number.
+  // The next distinct row uses (index + 1).
+  for (let i = 0; i < stats.length; i++) {
+    if (i > 0 && stats[i].wins === stats[i - 1].wins && stats[i].runnerUp === stats[i - 1].runnerUp) {
+      stats[i].rank = stats[i - 1].rank;
+    } else {
+      stats[i].rank = i + 1;
+    }
+  }
+
   return (
     <div
       style={{
@@ -98,12 +108,13 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 60px 80px 60px',
+            gridTemplateColumns: '40px 1fr 60px 80px 60px',
             padding: '10px 20px 6px',
             borderBottom: '1px solid #1e1e30',
             flexShrink: 0,
           }}
         >
+          <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px' }}>RANK</span>
           <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px' }}>PLAYER</span>
           <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', textAlign: 'center' }}>WINS</span>
           <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', textAlign: 'center' }}>RUNNER-UP</span>
@@ -122,12 +133,23 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
                 key={stat.name}
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: '1fr 60px 80px 60px',
+                  gridTemplateColumns: '40px 1fr 60px 80px 60px',
                   alignItems: 'center',
                   padding: '10px 0',
                   borderBottom: idx === stats.length - 1 ? 'none' : '1px solid #1a1a28',
                 }}
               >
+                {/* Rank */}
+                <span
+                  style={{
+                    fontSize: '13px',
+                    fontWeight: '700',
+                    color: stat.wins > 0 ? accentColor : '#6b7280',
+                  }}
+                >
+                  {stat.rank}
+                </span>
+
                 {/* Player name */}
                 <span
                   style={{
