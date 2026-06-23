@@ -18,19 +18,37 @@ const UA = 'TennisCalendar/1.0 (https://github.com/abhinavp403/tennis-calendar; 
  * Tour-specific overrides can be expressed as { atp, wta } objects.
  */
 const WIKI_NAME_MAP = {
+  // Grand Slam / Masters
   'roland garros': 'French Open',
-  'morocco open': { atp: 'Grand Prix Hassan II', wta: 'Grand Prix SAR La Princesse Lalla Meryem' },
   'italian open': "Internazionali BNL d'Italia",
   'madrid open': 'Mutua Madrid Open',
   'canadian open': 'Canadian Open',
   'cincinnat': 'Cincinnati Open',
   'paris masters': 'Paris Masters',
-  'stuttgart open': 'Porsche Tennis Grand Prix',
-  'porsche tennis': 'Porsche Tennis Grand Prix',
-  'queen\'s club': "Queen's Club Championships",
-  'libéma open': 'Libéma Open',
   'shanghai masters': 'Shanghai Masters',
   'china open': 'China Open',
+  'queen\'s club': "Queen's Club Championships",
+  'libéma open': 'Libéma Open',
+
+  // Renamed Priority 1 events
+  'berlin open': 'Berlin Tennis Open',
+  'boss open': 'BOSS Open',
+  'porsche tennis': 'Porsche Tennis Grand Prix',
+  'tokyo open': 'Japan Open Tennis Championships',
+  'osaka open': "Japan Women's Open",
+
+  // Renamed Priority 2 events
+  'acapulco open': 'Mexican Open',
+  'bucharest open': 'Țiriac Open',
+  'buenos aires open': 'Argentina Open',
+  'santiago open': 'Chile Open',
+  'båstad open': 'Swedish Open',
+  'gstaad open': 'Swiss Open Gstaad',
+  'brussels open': 'European Open',
+  'bmw open': 'BMW Open',
+
+  // Tour-specific (different Wikipedia pages per tour)
+  'morocco open': { atp: 'Grand Prix Hassan II', wta: 'Grand Prix SAR La Princesse Lalla Meryem' },
 };
 
 function getWikiName(tournament, tour) {

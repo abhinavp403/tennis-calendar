@@ -35,19 +35,38 @@ const MONTH_PATTERN = Object.keys(MONTHS).join('|');
  * Keys are substrings of tournament.name (lowercase), values are the Wikipedia title prefix.
  */
 const WIKI_NAME_MAP = {
-  'bavarian international': 'BMW Open',
-  'stuttgart open': 'Porsche Tennis Grand Prix',       // WTA Stuttgart
-  'porsche tennis': 'Porsche Tennis Grand Prix',
-  'internazionali bnl': "Internazionali BNL d'Italia",
+  // Grand Slam / Masters
+  'roland garros': 'French Open',
   'italian open': "Internazionali BNL d'Italia",
-  'canadian open': 'Canadian Open',
-  'cincinnat': 'Western & Southern Open',
+  'internazionali bnl': "Internazionali BNL d'Italia",
   'madrid open': 'Mutua Madrid Open',
-  'paris masters': 'Rolex Paris Masters',
-  'libéma open': 'Libéma Open',
-  'queen\'s club': "Queen's Club Championships",
+  'canadian open': 'Canadian Open',
+  'cincinnat': 'Cincinnati Open',
+  'paris masters': 'Paris Masters',
   'shanghai masters': 'Shanghai Masters',
   'china open': 'China Open',
+  'queen\'s club': "Queen's Club Championships",
+  'libéma open': 'Libéma Open',
+
+  // Renamed Priority 1 events
+  'berlin open': 'Berlin Tennis Open',
+  'boss open': 'BOSS Open',
+  'porsche tennis': 'Porsche Tennis Grand Prix',
+  'tokyo open': 'Japan Open Tennis Championships',
+  'osaka open': "Japan Women's Open",
+
+  // Renamed Priority 2 events
+  'acapulco open': 'Mexican Open',
+  'bucharest open': 'Țiriac Open',
+  'buenos aires open': 'Argentina Open',
+  'santiago open': 'Chile Open',
+  'båstad open': 'Swedish Open',
+  'gstaad open': 'Swiss Open Gstaad',
+  'brussels open': 'European Open',
+  'bmw open': 'BMW Open',
+
+  // Tour-specific (different Wikipedia pages per tour)
+  'morocco open': { atp: 'Grand Prix Hassan II', wta: 'Grand Prix SAR La Princesse Lalla Meryem' },
 };
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -122,17 +141,20 @@ function isValidMatch(correctEnd, tournament, wikiTitle) {
   return titleWords.some(w => nameWords.some(n => n.includes(w) || w.includes(n)));
 }
 
-function getWikiSearchName(tournament) {
+function getWikiSearchName(tournament, tour) {
   const lower = tournament.name.toLowerCase();
   for (const [key, mapped] of Object.entries(WIKI_NAME_MAP)) {
-    if (lower.includes(key)) return mapped;
+    if (lower.includes(key)) {
+      if (typeof mapped === 'string') return mapped;
+      return mapped[tour] || tournament.name;
+    }
   }
   return tournament.name;
 }
 
-async function checkTournamentDate(tournament) {
+async function checkTournamentDate(tournament, tour) {
   const year = tournament.start.slice(0, 4);
-  const searchName = getWikiSearchName(tournament);
+  const searchName = getWikiSearchName(tournament, tour);
   const usedMapping = searchName !== tournament.name;
   const queries = [
     `${year} ${searchName} tennis`,
@@ -196,7 +218,7 @@ export async function fixTournamentDates(dataPath = DATA_PATH) {
 
       console.log(`Checking: ${tour.toUpperCase()} ${tournament.name} (current end: ${tournament.end})`);
       try {
-        const result = await checkTournamentDate(tournament);
+        const result = await checkTournamentDate(tournament, tour);
         if (!result) {
           console.log(`  ✗ Could not find date on Wikipedia`);
           continue;
