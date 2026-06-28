@@ -29,6 +29,7 @@ const WIKI_NAME_MAP = {
   'china open': 'China Open',
   'queen\'s club': "Queen's Club Championships",
   'libéma open': 'Libéma Open',
+  'eastbourne international': 'Eastbourne Open',
 
   // Renamed Priority 1 events
   'berlin open': 'Berlin Tennis Open',
