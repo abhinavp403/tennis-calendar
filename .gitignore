@@ -3,3 +3,10 @@ dist/
 dist-electron/
 .DS_Store
 *.log
+
+# Local reference assets / recordings (not part of the app)
+*.webp
+*.mov
+
+# Per-machine Claude Code config
+.claude/

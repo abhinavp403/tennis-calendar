@@ -2,13 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import dayjs from 'dayjs';
 import Calendar from './components/Calendar.jsx';
 import AppLogo from './components/AppLogo.jsx';
-
-function readData() {
-  return {
-    tournaments: window.electronAPI?.getTournaments() ?? { atp: [], wta: [] },
-    rankings: window.electronAPI?.getRankings?.() ?? { atp: {}, wta: {} },
-  };
-}
+import { loadInitialData, loadData, getSyncTime, setSyncTime, triggerSync, isWebMode } from './dataSource.js';
 
 function formatSyncTime(iso) {
   if (!iso) return null;
@@ -22,10 +16,30 @@ function formatSyncTime(iso) {
 export default function App() {
   const [tour, setTour] = useState('atp');
   const [currentDate, setCurrentDate] = useState(dayjs());
-  const [data, setData] = useState(() => readData());
-  const [lastSynced, setLastSynced] = useState(() => window.electronAPI?.getSyncTime?.() ?? null);
+  const [data, setData] = useState(() => loadInitialData());
+  const [lastSynced, setLastSynced] = useState(() => getSyncTime());
   const [isSyncing, setIsSyncing] = useState(false);
-  const [syncLabel, setSyncLabel] = useState(() => formatSyncTime(window.electronAPI?.getSyncTime?.() ?? null));
+  const [syncLabel, setSyncLabel] = useState(() => formatSyncTime(getSyncTime()));
+
+  // Web mode: fetch from the Gist on mount. Electron starts with data already populated.
+  useEffect(() => {
+    if (!isWebMode()) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await loadData();
+        if (cancelled) return;
+        setData(result);
+        const now = new Date().toISOString();
+        setSyncTime(now);
+        setLastSynced(now);
+        setSyncLabel(formatSyncTime(now));
+      } catch (err) {
+        console.error('Failed to load data from Gist:', err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // Keep "X min ago" label fresh
   useEffect(() => {
@@ -34,14 +48,18 @@ export default function App() {
   }, [lastSynced]);
 
   const handleRefresh = useCallback(async () => {
-    if (isSyncing || !window.electronAPI?.triggerSync) return;
+    if (isSyncing) return;
     setIsSyncing(true);
     try {
-      await window.electronAPI.triggerSync();
+      await triggerSync();
+      const result = await loadData();
+      setData(result);
       const now = new Date().toISOString();
-      setData(readData());
+      setSyncTime(now);
       setLastSynced(now);
       setSyncLabel(formatSyncTime(now));
+    } catch (err) {
+      console.error('Refresh failed:', err);
     } finally {
       setIsSyncing(false);
     }

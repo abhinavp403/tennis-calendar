@@ -77,6 +77,14 @@ npm run build
 
 ---
 
+## Web version (no install)
+
+Live at **https://tennis-calendar.vercel.app** (or wherever you deploy it on Vercel).
+
+The web build serves the same React app and fetches tournament data from the cloud Gist on load. Works on phones, tablets, and any browser — no install needed. Deploy your own copy by importing this repo into Vercel; no configuration required (settings live in `vercel.json`).
+
+---
+
 ## Downloading the App
 
 Pre-built installers can be generated via GitHub Actions (triggered manually from the Actions tab).
