@@ -13,6 +13,14 @@ function formatSyncTime(iso) {
   return dayjs(iso).format('MMM D, h:mm A');
 }
 
+const SURFACE_FILTERS = [
+  { key: 'All',          color: '#9ca3af' },
+  { key: 'Hard',         color: '#3b82f6' },
+  { key: 'Indoor Hard',  color: '#a78bfa', short: 'Indoor' },
+  { key: 'Clay',         color: '#f97316' },
+  { key: 'Grass',        color: '#22c55e' },
+];
+
 export default function App() {
   const [tour, setTour] = useState('atp');
   const [currentDate, setCurrentDate] = useState(dayjs());
@@ -20,6 +28,7 @@ export default function App() {
   const [lastSynced, setLastSynced] = useState(() => getSyncTime());
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncLabel, setSyncLabel] = useState(() => formatSyncTime(getSyncTime()));
+  const [surfaceFilter, setSurfaceFilter] = useState('All');
 
   // Web mode: fetch from the Gist on mount. Electron starts with data already populated.
   useEffect(() => {
@@ -65,8 +74,19 @@ export default function App() {
     }
   }, [isSyncing]);
 
-  const tournaments = tour === 'atp' ? data.tournaments.atp : data.tournaments.wta;
+  const tourTournaments = tour === 'atp' ? data.tournaments.atp : data.tournaments.wta;
+  const tournaments = surfaceFilter === 'All'
+    ? tourTournaments
+    : tourTournaments.filter(t => t.surface === surfaceFilter);
   const rankingsData = data.rankings;
+
+  // Upcoming tournaments: starting today through +7 days (current tour, ignores surface filter)
+  const todayStr = dayjs().format('YYYY-MM-DD');
+  const weekAheadStr = dayjs().add(7, 'day').format('YYYY-MM-DD');
+  const upcoming = tourTournaments
+    .filter(t => t.start >= todayStr && t.start <= weekAheadStr)
+    .sort((a, b) => a.start.localeCompare(b.start))
+    .slice(0, 5);
 
   const prevMonth = () => setCurrentDate(d => d.subtract(1, 'month'));
   const nextMonth = () => setCurrentDate(d => d.add(1, 'month'));
@@ -216,6 +236,85 @@ export default function App() {
           </div>
         </div>
       </header>
+
+      {/* Secondary toolbar: surface filter + upcoming-this-week */}
+      <div
+        className="flex items-center gap-4 px-6 py-2"
+        style={{
+          background: 'rgba(12,12,22,0.85)',
+          borderBottom: '1px solid #16162a',
+          minHeight: '44px',
+        }}
+      >
+        {/* Surface filter */}
+        <div className="flex items-center gap-1.5">
+          <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.6px', marginRight: '4px' }}>
+            SURFACE
+          </span>
+          {SURFACE_FILTERS.map(({ key, color, short }) => {
+            const active = surfaceFilter === key;
+            return (
+              <button
+                key={key}
+                onClick={() => setSurfaceFilter(key)}
+                style={{
+                  fontSize: '11px', fontWeight: '700', letterSpacing: '0.3px',
+                  padding: '4px 10px', borderRadius: '999px',
+                  border: `1px solid ${active ? color : '#252540'}`,
+                  background: active ? `${color}33` : '#16162a',
+                  color: active ? color : '#9ca3af',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {short || key}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Vertical divider */}
+        <div style={{ width: 1, height: 24, background: '#252545' }} />
+
+        {/* Upcoming this week */}
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.6px', whiteSpace: 'nowrap' }}>
+            UPCOMING
+          </span>
+          {upcoming.length === 0 ? (
+            <span style={{ fontSize: '11px', color: '#3b3f55', fontStyle: 'italic' }}>
+              Nothing in the next 7 days
+            </span>
+          ) : (
+            <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', flex: 1 }}>
+              {upcoming.map(t => {
+                const days = dayjs(t.start).diff(dayjs(), 'day');
+                const label = days <= 0 ? 'starts today' : days === 1 ? 'tomorrow' : `in ${days}d`;
+                const surfaceColor = SURFACE_FILTERS.find(s => s.key === t.surface)?.color || '#9ca3af';
+                return (
+                  <span
+                    key={t.id}
+                    title={`${t.location} · ${t.surface}`}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '6px',
+                      fontSize: '11px', fontWeight: '600',
+                      padding: '4px 10px', borderRadius: '6px',
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid #1e1e30',
+                      color: '#e5e7eb',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: surfaceColor }} />
+                    {t.name}
+                    <span style={{ color: '#6b7280', fontWeight: '500' }}>· {label}</span>
+                  </span>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Calendar */}
       <main className="flex-1 p-6 overflow-auto">
