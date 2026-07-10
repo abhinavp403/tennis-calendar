@@ -1,7 +1,39 @@
 import { useEffect, useState } from 'react';
+import PlayerProfileDialog from './PlayerProfileDialog.jsx';
+
+const SURFACE_META = {
+  Hard:          { short: 'Hard',   color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' },
+  'Indoor Hard': { short: 'Indoor', color: '#a78bfa', bg: 'rgba(167,139,250,0.15)' },
+  Clay:          { short: 'Clay',   color: '#f97316', bg: 'rgba(249,115,22,0.15)' },
+  Grass:         { short: 'Grass',  color: '#22c55e', bg: 'rgba(34,197,94,0.15)' },
+};
+const surfaceKey = s => (SURFACE_META[s] ? s : 'Hard');
 
 export default function PlayerStatsDialog({ monthLabel, completedTournaments, tour, onClose }) {
+  // hoveredPlayer = null | { name, top, left, placeAbove }
   const [hoveredPlayer, setHoveredPlayer] = useState(null);
+  // selectedPlayer = null | string (player name)
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+
+  const showTooltip = (e, stat) => {
+    if (stat.winsList.length === 0 && stat.runnerUpList.length === 0) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    // Rough estimate: 22px header + 18px per entry + 14px section gap if both lists present
+    const estHeight =
+      22 + stat.winsList.length * 18 + stat.runnerUpList.length * 18 +
+      (stat.winsList.length > 0 && stat.runnerUpList.length > 0 ? 14 : 0) +
+      24; // padding
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const placeAbove = spaceBelow < estHeight + 16;
+    setHoveredPlayer({
+      name: stat.name,
+      left: rect.left,
+      top: placeAbove ? rect.top - 6 : rect.bottom + 6,
+      placeAbove,
+    });
+  };
+
+  const hideTooltip = () => setHoveredPlayer(null);
 
   useEffect(() => {
     const handler = e => { if (e.key === 'Escape') onClose(); };
@@ -18,24 +50,40 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
     return level != null ? String(level) : '';
   };
 
-  // Aggregate player stats: name → {wins, runnerUp, winsList, runnerUpList}
-  // Each list entry is {name, level} so the hover tooltip can show tier alongside title.
+  // Aggregate player stats: name → {wins, runnerUp, winsList, runnerUpList, surfaceWins}
+  // Each list entry carries name/level/surface/score so the profile dialog can re-render rich detail.
   const playerStats = {};
+  const ensure = name => {
+    if (!playerStats[name]) {
+      playerStats[name] = {
+        wins: 0, runnerUp: 0,
+        winsList: [], runnerUpList: [],
+        surfaceWins: { Hard: 0, 'Indoor Hard': 0, Clay: 0, Grass: 0 },
+        surfaceFinals: { Hard: 0, 'Indoor Hard': 0, Clay: 0, Grass: 0 },
+      };
+    }
+    return playerStats[name];
+  };
   for (const tournament of completedTournaments) {
-    const entry = { name: tournament.name, level: tournament.level };
+    const entry = {
+      name: tournament.name,
+      level: tournament.level,
+      surface: tournament.surface,
+      score: tournament.score,
+    };
+    const surf = surfaceKey(tournament.surface);
     if (tournament.winner) {
-      if (!playerStats[tournament.winner]) {
-        playerStats[tournament.winner] = { wins: 0, runnerUp: 0, winsList: [], runnerUpList: [] };
-      }
-      playerStats[tournament.winner].wins += 1;
-      playerStats[tournament.winner].winsList.push(entry);
+      const p = ensure(tournament.winner);
+      p.wins += 1;
+      p.winsList.push({ ...entry, opponent: tournament.runner_up });
+      p.surfaceWins[surf] += 1;
+      p.surfaceFinals[surf] += 1;
     }
     if (tournament.runner_up) {
-      if (!playerStats[tournament.runner_up]) {
-        playerStats[tournament.runner_up] = { wins: 0, runnerUp: 0, winsList: [], runnerUpList: [] };
-      }
-      playerStats[tournament.runner_up].runnerUp += 1;
-      playerStats[tournament.runner_up].runnerUpList.push(entry);
+      const p = ensure(tournament.runner_up);
+      p.runnerUp += 1;
+      p.runnerUpList.push({ ...entry, opponent: tournament.winner });
+      p.surfaceFinals[surf] += 1;
     }
   }
 
@@ -48,6 +96,8 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
       total: data.wins + data.runnerUp,
       winsList: data.winsList,
       runnerUpList: data.runnerUpList,
+      surfaceWins: data.surfaceWins,
+      surfaceFinals: data.surfaceFinals,
     }))
     .sort((a, b) => {
       if (b.wins !== a.wins) return b.wins - a.wins;
@@ -165,71 +215,26 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
                   {stat.rank}
                 </span>
 
-                {/* Player name (with hover tooltip listing tournaments) */}
+                {/* Player name — hover for breakdown, click for full profile */}
                 <span
-                  onMouseEnter={() => setHoveredPlayer(stat.name)}
-                  onMouseLeave={() => setHoveredPlayer(null)}
+                  onMouseEnter={e => showTooltip(e, stat)}
+                  onMouseLeave={hideTooltip}
+                  onClick={() => { hideTooltip(); setSelectedPlayer(stat.name); }}
                   style={{
-                    position: 'relative',
                     fontSize: '13px',
                     fontWeight: stat.wins > 0 ? '600' : '500',
                     color: stat.wins > 0 ? 'white' : '#c4c4d4',
-                    cursor: 'default',
+                    cursor: 'pointer',
                     width: 'fit-content',
+                    textDecoration: 'underline',
+                    textDecorationColor: 'transparent',
+                    textUnderlineOffset: '3px',
+                    transition: 'text-decoration-color 0.15s',
                   }}
+                  onMouseOver={e => (e.currentTarget.style.textDecorationColor = accentColor)}
+                  onMouseOut={e => (e.currentTarget.style.textDecorationColor = 'transparent')}
                 >
                   {stat.name}
-                  {hoveredPlayer === stat.name && (stat.winsList.length > 0 || stat.runnerUpList.length > 0) && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: '100%',
-                        left: 0,
-                        marginTop: '6px',
-                        zIndex: 20,
-                        backgroundColor: '#0c0c14',
-                        border: `1px solid ${accentColor}`,
-                        borderRadius: '8px',
-                        padding: '10px 12px',
-                        minWidth: '240px',
-                        maxWidth: '320px',
-                        boxShadow: '0 6px 24px rgba(0,0,0,0.7)',
-                        fontWeight: '500',
-                        pointerEvents: 'none',
-                      }}
-                    >
-                      {stat.winsList.length > 0 && (
-                        <div style={{ marginBottom: stat.runnerUpList.length > 0 ? '8px' : 0 }}>
-                          <div style={{ fontSize: '10px', fontWeight: '700', color: '#fde68a', letterSpacing: '0.5px', marginBottom: '4px' }}>
-                            🏆 WINS ({stat.winsList.length})
-                          </div>
-                          {stat.winsList.map((t, i) => (
-                            <div key={`w-${i}`} style={{ fontSize: '12px', color: '#e5e7eb', lineHeight: '1.5' }}>
-                              {t.name}
-                              {t.level != null && (
-                                <span style={{ color: '#6b7280', fontWeight: '500' }}> · {levelLabel(t.level)}</span>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {stat.runnerUpList.length > 0 && (
-                        <div>
-                          <div style={{ fontSize: '10px', fontWeight: '700', color: '#9ca3af', letterSpacing: '0.5px', marginBottom: '4px' }}>
-                            🥈 RUNNER-UP ({stat.runnerUpList.length})
-                          </div>
-                          {stat.runnerUpList.map((t, i) => (
-                            <div key={`r-${i}`} style={{ fontSize: '12px', color: '#c4c4d4', lineHeight: '1.5' }}>
-                              {t.name}
-                              {t.level != null && (
-                                <span style={{ color: '#6b7280', fontWeight: '500' }}> · {levelLabel(t.level)}</span>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </span>
 
                 {/* Wins */}
@@ -276,6 +281,100 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
           )}
         </div>
       </div>
+
+      {/* Floating tooltip rendered outside the scroll container so it never clips */}
+      {hoveredPlayer && (() => {
+        const stat = stats.find(s => s.name === hoveredPlayer.name);
+        if (!stat) return null;
+        return (
+          <div
+            style={{
+              position: 'fixed',
+              left: hoveredPlayer.left,
+              top: hoveredPlayer.top,
+              transform: hoveredPlayer.placeAbove ? 'translateY(-100%)' : 'none',
+              zIndex: 10001,
+              backgroundColor: '#0c0c14',
+              border: `1px solid ${accentColor}`,
+              borderRadius: '8px',
+              padding: '10px 12px',
+              minWidth: '240px',
+              maxWidth: '320px',
+              boxShadow: '0 6px 24px rgba(0,0,0,0.7)',
+              fontWeight: '500',
+              pointerEvents: 'none',
+            }}
+          >
+            {/* Surface specialization chips */}
+            {(stat.wins > 0 || stat.runnerUp > 0) && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '8px' }}>
+                {Object.entries(SURFACE_META).map(([key, meta]) => {
+                  const w = stat.surfaceWins?.[key] || 0;
+                  const f = stat.surfaceFinals?.[key] || 0;
+                  if (f === 0) return null;
+                  return (
+                    <span
+                      key={key}
+                      style={{
+                        fontSize: '10px', fontWeight: '700',
+                        padding: '2px 6px', borderRadius: '4px',
+                        background: meta.bg, color: meta.color,
+                        letterSpacing: '0.3px',
+                      }}
+                    >
+                      {meta.short} {w}{f > w ? `/${f}` : ''}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+            {stat.winsList.length > 0 && (
+              <div style={{ marginBottom: stat.runnerUpList.length > 0 ? '8px' : 0 }}>
+                <div style={{ fontSize: '10px', fontWeight: '700', color: '#fde68a', letterSpacing: '0.5px', marginBottom: '4px' }}>
+                  🏆 WINS ({stat.winsList.length})
+                </div>
+                {stat.winsList.map((t, i) => (
+                  <div key={`w-${i}`} style={{ fontSize: '12px', color: '#e5e7eb', lineHeight: '1.5' }}>
+                    {t.name}
+                    {t.level != null && (
+                      <span style={{ color: '#6b7280', fontWeight: '500' }}> · {levelLabel(t.level)}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {stat.runnerUpList.length > 0 && (
+              <div>
+                <div style={{ fontSize: '10px', fontWeight: '700', color: '#9ca3af', letterSpacing: '0.5px', marginBottom: '4px' }}>
+                  🥈 RUNNER-UP ({stat.runnerUpList.length})
+                </div>
+                {stat.runnerUpList.map((t, i) => (
+                  <div key={`r-${i}`} style={{ fontSize: '12px', color: '#c4c4d4', lineHeight: '1.5' }}>
+                    {t.name}
+                    {t.level != null && (
+                      <span style={{ color: '#6b7280', fontWeight: '500' }}> · {levelLabel(t.level)}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* Player profile drill-down */}
+      {selectedPlayer && (() => {
+        const stat = stats.find(s => s.name === selectedPlayer);
+        if (!stat) return null;
+        return (
+          <PlayerProfileDialog
+            stat={stat}
+            tour={tour}
+            monthLabel={monthLabel}
+            onClose={() => setSelectedPlayer(null)}
+          />
+        );
+      })()}
     </div>
   );
 }
