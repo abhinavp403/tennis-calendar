@@ -7,7 +7,7 @@ import PlayerStatsDialog from './PlayerStatsDialog.jsx';
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-export default function Calendar({ currentDate, tournaments, tour, rankingsData }) {
+export default function Calendar({ currentDate, tournaments, allTournaments, tour, rankingsData, flashId }) {
   const [showSummary, setShowSummary] = useState(false);
   const [showRankings, setShowRankings] = useState(false);
   const [showStats, setShowStats] = useState(false);
@@ -17,8 +17,12 @@ export default function Calendar({ currentDate, tournaments, tour, rankingsData 
   const today = dayjs();
   const todayStr = today.format('YYYY-MM-DD');
 
+  // Results and stats always reflect the full tour schedule, not the
+  // surface-filtered grid view (`tournaments` drives only the day cells).
+  const statsSource = allTournaments ?? tournaments;
+
   // Tournaments that ended this month and have results
-  const completedThisMonth = tournaments.filter(t =>
+  const completedThisMonth = statsSource.filter(t =>
     t.winner &&
     dayjs(t.end).isBefore(today) &&
     dayjs(t.end).month() === currentDate.month() &&
@@ -28,7 +32,7 @@ export default function Calendar({ currentDate, tournaments, tour, rankingsData 
   // Cumulative: all tournaments completed from start of season through end of current month
   const seasonStart = currentDate.startOf('year');
   const monthEndDate = currentDate.endOf('month');
-  const cumulativeTournaments = tournaments.filter(t =>
+  const cumulativeTournaments = statsSource.filter(t =>
     t.winner &&
     dayjs(t.end).isBefore(today) &&
     dayjs(t.end).isSameOrAfter(seasonStart) &&
@@ -163,7 +167,7 @@ export default function Calendar({ currentDate, tournaments, tour, rankingsData 
       <div className="grid grid-cols-7" style={{ gap: '4px' }}>
         {cells.map((cell, i) =>
           cell === null ? (
-            <div key={`pad-${i}`} style={{ minHeight: '100px' }} />
+            <div key={`pad-${i}`} className="day-cell" style={{ padding: 0 }} />
           ) : (
             <DayCell
               key={cell.dateStr}
@@ -172,6 +176,7 @@ export default function Calendar({ currentDate, tournaments, tour, rankingsData 
               tournaments={cell.tournaments}
               isToday={cell.dateStr === todayStr}
               tour={tour}
+              flash={flashId != null && cell.tournaments.some(t => t.id === flashId)}
             />
           )
         )}
@@ -200,6 +205,8 @@ export default function Calendar({ currentDate, tournaments, tour, rankingsData 
           monthLabel={monthLabel}
           rankings={rankings}
           prevRankings={prevRankings}
+          allRankings={tourRankings}
+          monthKey={monthKey}
           tour={tour}
           onClose={() => setShowRankings(false)}
         />
