@@ -56,17 +56,17 @@ export default function PlayerProfileDialog({ stat, tour, monthLabel, onClose })
           {levelLabel(t.level)}
         </div>
       </div>
-      {t.surface && (
+      {SURFACE_META[t.surface] && (
         <span
           style={{
             fontSize: '10px', fontWeight: '700',
             padding: '2px 6px', borderRadius: '4px',
-            background: (SURFACE_META[t.surface] || SURFACE_META.Hard).bg,
-            color:      (SURFACE_META[t.surface] || SURFACE_META.Hard).color,
+            background: SURFACE_META[t.surface].bg,
+            color:      SURFACE_META[t.surface].color,
             letterSpacing: '0.3px', whiteSpace: 'nowrap',
           }}
         >
-          {(SURFACE_META[t.surface] || SURFACE_META.Hard).short}
+          {SURFACE_META[t.surface].short}
         </span>
       )}
     </div>

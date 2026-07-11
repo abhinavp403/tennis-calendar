@@ -25,9 +25,11 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
       24; // padding
     const spaceBelow = window.innerHeight - rect.bottom;
     const placeAbove = spaceBelow < estHeight + 16;
+    // Keep the tooltip (maxWidth 320px) from overflowing the right viewport edge
+    const left = Math.max(8, Math.min(rect.left, window.innerWidth - 328));
     setHoveredPlayer({
       name: stat.name,
-      left: rect.left,
+      left,
       top: placeAbove ? rect.top - 6 : rect.bottom + 6,
       placeAbove,
     });
@@ -36,10 +38,12 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
   const hideTooltip = () => setHoveredPlayer(null);
 
   useEffect(() => {
-    const handler = e => { if (e.key === 'Escape') onClose(); };
+    // When the profile drill-down is open, Escape closes only the profile
+    // (the profile dialog has its own listener); otherwise close this dialog.
+    const handler = e => { if (e.key === 'Escape' && !selectedPlayer) onClose(); };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [onClose]);
+  }, [onClose, selectedPlayer]);
 
   const accentColor = tour === 'atp' ? '#0066cc' : '#be398d';
 
