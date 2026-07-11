@@ -35,3 +35,47 @@ body {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* Loading skeleton shimmer (web mode, while Gist data loads) */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton-cell {
+  border-radius: 8px;
+  border: 1px solid #1a1a2e;
+  background: linear-gradient(90deg, #13131f 0%, #1a1a2e 40%, #13131f 80%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+/* Month navigation transitions */
+@keyframes month-slide-left {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes month-slide-right {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes month-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.month-enter-left  { animation: month-slide-left 0.18s ease-out; }
+.month-enter-right { animation: month-slide-right 0.18s ease-out; }
+.month-enter-fade  { animation: month-fade 0.18s ease-out; }
+
+/* Day cells: compact on small screens */
+.day-cell { min-height: 100px; padding: 6px; }
+@media (max-width: 640px) {
+  .day-cell { min-height: 60px; padding: 4px; }
+}
+
+/* Search jump-to-tournament: flash the target day cell */
+@keyframes cell-flash {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+  25%, 75% { box-shadow: 0 0 0 3px rgba(255,214,64,0.85), 0 0 24px rgba(255,214,64,0.5); }
+  50%      { box-shadow: 0 0 0 2px rgba(255,214,64,0.5), 0 0 16px rgba(255,214,64,0.3); }
+}
+.cell-flash { animation: cell-flash 1.2s ease-in-out 2; }

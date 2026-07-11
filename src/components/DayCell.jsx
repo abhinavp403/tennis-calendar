@@ -13,7 +13,7 @@ const LEVEL_ACCENT = {
   250:  { border: '#374151', glow: 'rgba(107,114,128,0.08)' },
 };
 
-export default function DayCell({ day, dateStr, tournaments, isToday, tour }) {
+export default function DayCell({ day, dateStr, tournaments, isToday, tour, flash }) {
   const ringColor = TOUR_RING[tour];
 
   // Pick the highest-level tournament for cell accent
@@ -28,21 +28,24 @@ export default function DayCell({ day, dateStr, tournaments, isToday, tour }) {
     : hasTournament
     ? `linear-gradient(135deg, #14142a, #12122200)`
     : isWeekend
-    ? '#111120'
-    : '#13131f';
+    ? '#101019'
+    : '#11111c';
+
+  // Empty cells recede: near-invisible border, dimmer background, so
+  // tournament cells carry the visual weight.
+  const emptyBorder = isWeekend ? '#171728' : '#161624';
 
   return (
     <div
+      className={flash ? 'day-cell cell-flash' : 'day-cell'}
       style={{
-        minHeight: '100px',
         background: baseBg,
         border: isToday
           ? `2px solid ${ringColor}`
           : hasTournament
           ? `1px solid ${accent.border}`
-          : `1px solid ${isWeekend ? '#1c1c30' : '#1a1a2e'}`,
+          : `1px solid ${emptyBorder}`,
         borderRadius: '8px',
-        padding: '6px',
         display: 'flex',
         flexDirection: 'column',
         gap: '4px',
@@ -64,7 +67,7 @@ export default function DayCell({ day, dateStr, tournaments, isToday, tour }) {
           ? ringColor
           : hasTournament
           ? accent.border
-          : isWeekend ? '#1c1c30' : '#1a1a2e';
+          : emptyBorder;
         e.currentTarget.style.boxShadow = isToday
           ? `0 0 16px ${ringColor}44, inset 0 1px 0 ${ringColor}22`
           : hasTournament
@@ -77,7 +80,11 @@ export default function DayCell({ day, dateStr, tournaments, isToday, tour }) {
         style={{
           fontSize: '11px',
           fontWeight: isToday ? '800' : '500',
-          color: isToday ? ringColor : isWeekend ? '#5a5a80' : '#4b5563',
+          color: isToday
+            ? ringColor
+            : hasTournament
+            ? (isWeekend ? '#5a5a80' : '#4b5563')
+            : '#38385a',
           lineHeight: 1,
         }}
       >
