@@ -46,7 +46,7 @@ So: editing `data/tournaments.json` and rebuilding will NOT change what users se
 
 **`tournaments.json`**: `{atp: Tournament[], wta: Tournament[]}`. Each tournament has `id`, `name`, `level` (250 / 500 / 1000 / 1500 / 2000), `start`, `end` (ISO date strings), `location`, `surface`, `logo` (PNG in `public/logos/`), and optional `winner`, `runner_up`, `score` once completed.
 
-**`rankings.json`**: `{atp: {"YYYY-MM": Player[]}, wta: {"YYYY-MM": Player[]}}`. Each player: `rank`, `name`, `points`, `movement` (vs. previous month).
+**`rankings.json`**: `{atp: { [key]: Player[] }, wta: { [key]: Player[] }}`. Each player: `rank`, `name`, `country`, `points`, optional `movement`. Snapshot keys are **mixed**: legacy `"YYYY-MM"` (monthly, Jan–Jun 2026, treated as the month's last day) and `"YYYY-MM-DD"` (bi-weekly, the exact Monday the rankings reflect, captured going forward). `fetchRankings.js` parses the Wikipedia page's `{{As of|Y|M|D}}` marker and stores a new snapshot only when it's ≥13 days after the latest one. Consumers normalize both key forms via a `keyDate`/`rankingKeyDate` helper (see `Calendar.jsx` and `RankingsDialog.jsx`); Wikipedia exposes only the current week, so older bi-weekly history cannot be backfilled.
 
 ## UI conventions
 

@@ -1,7 +1,10 @@
 /**
- * Fetches current ATP and WTA rankings from Wikipedia's "Current tennis rankings" page
- * and updates rankings.json with a new monthly snapshot when the previous month is complete
- * but missing from the data.
+ * Fetches current ATP and WTA rankings from Wikipedia's "Current tennis rankings"
+ * page and stores a snapshot keyed by the page's "As of" date (the weekly Monday
+ * the rankings reflect). Snapshots are captured at most once per ~2 weeks
+ * (bi-weekly). Wikipedia only exposes the current week, so history cannot be
+ * backfilled — legacy monthly keys ("YYYY-MM") remain and are read alongside the
+ * new date keys ("YYYY-MM-DD").
  */
 
 import { readFileSync, writeFileSync } from 'fs';
@@ -15,6 +18,9 @@ const UA = 'TennisCalendar/1.0 (https://github.com/abhinavp403/tennis-calendar; 
 
 const WIKI_PAGE = 'Current tennis rankings';
 const TOP_N = 20;
+// Minimum days between stored snapshots. The tour updates weekly (Mondays), so
+// 13 lets an every-other-Monday cadence through while blocking same-week re-runs.
+const BIWEEKLY_MIN_DAYS = 13;
 
 async function getWikitext(title) {
   const url =
@@ -114,37 +120,77 @@ function abbreviateName(fullName) {
   return parts[0][0] + '. ' + parts.slice(1).join(' ');
 }
 
-function getMissingMonths(existingKeys) {
-  const today = new Date();
-  const currentYear = today.getFullYear();
-  const currentMonth = today.getMonth(); // 0-indexed
+// Parse the "As of" date from the page, e.g. {{As of|2026|6|29|df=UK|lc=y}}
+// → "2026-06-29". All ranking tables on the page share the same Monday date.
+function parseAsOfDate(wikitext) {
+  const m = wikitext.match(/\{\{As of\|(\d{4})\|(\d{1,2})\|(\d{1,2})/i);
+  if (!m) return null;
+  const [, y, mo, d] = m;
+  return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
 
-  // Only generate rankings for 2026 months that have fully completed
-  const missing = [];
-  for (let m = 0; m < currentMonth; m++) {
-    const key = `${currentYear}-${String(m + 1).padStart(2, '0')}`;
-    if (!existingKeys.includes(key)) {
-      missing.push(key);
-    }
+// Normalize any ranking key to a UTC Date. Legacy "YYYY-MM" maps to that
+// month's last day; "YYYY-MM-DD" maps to the exact date.
+function keyToDate(key) {
+  if (/^\d{4}-\d{2}$/.test(key)) {
+    const [y, m] = key.split('-').map(Number);
+    return new Date(Date.UTC(y, m, 0)); // day 0 of next month = last day of this month
   }
-  return missing;
+  const [y, m, d] = key.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d));
+}
+
+// True when asOfDate is the final weekly ranking of its month — i.e. the next
+// weekly update (7 days later) lands in a different month. Works whether the
+// update fell on a Monday or a Slam-final Sunday.
+function isMonthEndUpdate(asOfDate) {
+  const d = keyToDate(asOfDate);
+  const next = new Date(d.getTime() + 7 * 86_400_000);
+  return next.getUTCMonth() !== d.getUTCMonth();
+}
+
+// Store a new snapshot if the "As of" date is new AND either it's ≥13 days
+// after the latest snapshot (bi-weekly cadence) OR it's the last weekly ranking
+// of its month (guarantees a true end-of-month snapshot even inside the gap).
+function shouldStore(existingKeys, asOfDate) {
+  if (existingKeys.includes(asOfDate)) return false; // already captured this week
+  if (existingKeys.length === 0) return true;
+  const asOf = keyToDate(asOfDate);
+  const latest = existingKeys.map(keyToDate).sort((a, b) => b - a)[0];
+  const days = (asOf - latest) / 86_400_000;
+  // days > 0 keeps the month-end branch from adding a point older than what we
+  // already hold (e.g. legacy "2026-06" normalizes to June 30, so June's last
+  // Monday June 29 must not be stored on top of it).
+  return days >= BIWEEKLY_MIN_DAYS || (days > 0 && isMonthEndUpdate(asOfDate));
 }
 
 export async function fetchMissingRankings(dataPath = DATA_PATH) {
   const data = JSON.parse(readFileSync(dataPath, 'utf-8'));
 
-  const atpKeys = Object.keys(data.atp || {});
-  const wtaKeys = Object.keys(data.wta || {});
-
-  const missingAtp = getMissingMonths(atpKeys);
-  const missingWta = getMissingMonths(wtaKeys);
-
-  if (missingAtp.length === 0 && missingWta.length === 0) {
-    console.log('Rankings are up to date.');
+  console.log('Fetching current rankings from Wikipedia...');
+  const wikitext = await getWikitext(WIKI_PAGE);
+  if (!wikitext) {
+    console.error('  ✗ Could not fetch Wikipedia page');
     return false;
   }
 
-  // Build country lookup from previous months (for noflag players)
+  const asOfDate = parseAsOfDate(wikitext);
+  if (!asOfDate) {
+    console.error('  ✗ Could not determine the "As of" date — skipping to avoid mislabeling');
+    return false;
+  }
+
+  const atpKeys = Object.keys(data.atp || {});
+  const wtaKeys = Object.keys(data.wta || {});
+  const storeAtp = shouldStore(atpKeys, asOfDate);
+  const storeWta = shouldStore(wtaKeys, asOfDate);
+
+  if (!storeAtp && !storeWta) {
+    console.log(`Rankings are up to date (latest is within ${BIWEEKLY_MIN_DAYS} days of ${asOfDate}).`);
+    return false;
+  }
+
+  // Build country lookup from all stored snapshots (for noflag players)
   const countryLookup = {};
   for (const tour of ['atp', 'wta']) {
     for (const key of Object.keys(data[tour] || {})) {
@@ -154,13 +200,6 @@ export async function fetchMissingRankings(dataPath = DATA_PATH) {
         }
       }
     }
-  }
-
-  console.log('Fetching current rankings from Wikipedia...');
-  const wikitext = await getWikitext(WIKI_PAGE);
-  if (!wikitext) {
-    console.error('  ✗ Could not fetch Wikipedia page');
-    return false;
   }
 
   // Parse ATP rankings
@@ -173,25 +212,21 @@ export async function fetchMissingRankings(dataPath = DATA_PATH) {
 
   let updated = false;
 
-  if (atpPlayers.length > 0 && missingAtp.length > 0) {
+  if (storeAtp && atpPlayers.length > 0) {
     if (!data.atp) data.atp = {};
-    // Only fill the most recent missing month with current data
-    // (Wikipedia shows current rankings, not historical)
-    const latestMissing = missingAtp[missingAtp.length - 1];
-    data.atp[latestMissing] = atpPlayers;
-    console.log(`  ✓ ATP rankings saved for ${latestMissing} (${atpPlayers.length} players)`);
+    data.atp[asOfDate] = atpPlayers;
+    console.log(`  ✓ ATP rankings saved for ${asOfDate} (${atpPlayers.length} players)`);
     updated = true;
-  } else if (missingAtp.length > 0) {
+  } else if (storeAtp) {
     console.log('  ✗ Could not parse ATP rankings');
   }
 
-  if (wtaPlayers.length > 0 && missingWta.length > 0) {
+  if (storeWta && wtaPlayers.length > 0) {
     if (!data.wta) data.wta = {};
-    const latestMissing = missingWta[missingWta.length - 1];
-    data.wta[latestMissing] = wtaPlayers;
-    console.log(`  ✓ WTA rankings saved for ${latestMissing} (${wtaPlayers.length} players)`);
+    data.wta[asOfDate] = wtaPlayers;
+    console.log(`  ✓ WTA rankings saved for ${asOfDate} (${wtaPlayers.length} players)`);
     updated = true;
-  } else if (missingWta.length > 0) {
+  } else if (storeWta) {
     console.log('  ✗ Could not parse WTA rankings');
   }
 

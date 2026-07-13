@@ -7,6 +7,17 @@ import PlayerStatsDialog from './PlayerStatsDialog.jsx';
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+// Rankings keys are either "YYYY-MM" (legacy monthly, maps to month end) or
+// "YYYY-MM-DD" (bi-weekly, exact date). Normalize for chronological ordering.
+function rankingKeyDate(key) {
+  if (/^\d{4}-\d{2}$/.test(key)) {
+    const [y, m] = key.split('-').map(Number);
+    return new Date(y, m, 0); // day 0 of next month = last day of this month
+  }
+  const [y, m, d] = key.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
 export default function Calendar({ currentDate, tournaments, allTournaments, tour, rankingsData, flashId }) {
   const [showSummary, setShowSummary] = useState(false);
   const [showRankings, setShowRankings] = useState(false);
@@ -62,21 +73,26 @@ export default function Calendar({ currentDate, tournaments, allTournaments, tou
   const accentColor = tour === 'atp' ? '#0066cc' : '#be398d';
   const monthLabel = currentDate.format('MMMM YYYY');
 
-  // Rankings: only show for fully completed months
-  const monthEnd = currentDate.endOf('month');
-  const isMonthComplete = monthEnd.isBefore(today);
-  const monthKey = currentDate.format('YYYY-MM');
+  // Rankings can be keyed by month ("2026-06", legacy) or by the exact
+  // Monday they reflect ("2026-07-13", bi-weekly). Show the latest snapshot
+  // that falls within the displayed month; compare movement to the one before.
   const tourRankings = rankingsData?.[tour] ?? {};
-  const rankings = tourRankings[monthKey] ?? null;
-
-  // Previous month rankings for movement comparison
-  const prevMonthKey = currentDate.subtract(1, 'month').format('YYYY-MM');
-  const prevRankings = tourRankings[prevMonthKey] ?? null;
+  const sortedRankingKeys = Object.keys(tourRankings).sort(
+    (a, b) => rankingKeyDate(a) - rankingKeyDate(b)
+  );
+  const monthSnapshotKeys = sortedRankingKeys.filter(k => {
+    const d = rankingKeyDate(k);
+    return d.getFullYear() === currentDate.year() && d.getMonth() === currentDate.month();
+  });
+  const activeRankingKey = monthSnapshotKeys.at(-1) ?? null;
+  const rankings = activeRankingKey ? tourRankings[activeRankingKey] : null;
+  const activeRankingIdx = activeRankingKey ? sortedRankingKeys.indexOf(activeRankingKey) : -1;
+  const prevRankings = activeRankingIdx > 0 ? tourRankings[sortedRankingKeys[activeRankingIdx - 1]] : null;
 
   return (
     <div className="w-full">
       {/* Month action buttons — above the grid for visibility */}
-      {(completedThisMonth.length > 0 || (isMonthComplete && rankings)) && (
+      {(completedThisMonth.length > 0 || cumulativeTournaments.length > 0 || rankings) && (
         <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
           {completedThisMonth.length > 0 && (
             <button
@@ -124,7 +140,7 @@ export default function Calendar({ currentDate, tournaments, allTournaments, tou
               📈 Player Stats (YTD)
             </button>
           )}
-          {isMonthComplete && rankings && (
+          {rankings && (
             <button
               onClick={() => setShowRankings(true)}
               style={{
@@ -206,7 +222,7 @@ export default function Calendar({ currentDate, tournaments, allTournaments, tou
           rankings={rankings}
           prevRankings={prevRankings}
           allRankings={tourRankings}
-          monthKey={monthKey}
+          activeKey={activeRankingKey}
           tour={tour}
           onClose={() => setShowRankings(false)}
         />

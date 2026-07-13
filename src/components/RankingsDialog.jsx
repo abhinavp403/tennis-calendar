@@ -2,52 +2,79 @@ import { useEffect } from 'react';
 
 const SPARK_COLORS = ['#fbbf24', '#94a3b8', '#d97706']; // gold, silver, bronze
 
-// Inline SVG line chart: top-3 players' points across every month up to monthKey.
-function RaceSparkline({ allRankings, monthKey, rankings }) {
-  const months = Object.keys(allRankings ?? {}).filter(k => k <= monthKey).sort();
-  if (months.length < 2) return null; // one point is not a race
+// Rankings keys are "YYYY-MM" (legacy monthly → month end) or "YYYY-MM-DD"
+// (bi-weekly → exact date). Normalize for ordering and comparison.
+function keyDate(key) {
+  if (/^\d{4}-\d{2}$/.test(key)) {
+    const [y, m] = key.split('-').map(Number);
+    return new Date(y, m, 0);
+  }
+  const [y, m, d] = key.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+// Inline SVG line chart: the active snapshot's top-3 players' points across
+// every earlier snapshot (monthly and bi-weekly), spaced evenly in order.
+function RaceSparkline({ allRankings, activeKey, rankings }) {
+  const activeDate = keyDate(activeKey);
+  const keys = Object.keys(allRankings ?? {})
+    .filter(k => keyDate(k) <= activeDate)
+    .sort((a, b) => keyDate(a) - keyDate(b));
+  if (keys.length < 2) return null; // one point is not a race
 
   const top3 = rankings.slice(0, 3);
   const series = top3.map(p => ({
     name: p.name,
-    // Each entry: { points, wasTop3 } — hollow markers flag months spent outside the top 3
-    months: months.map(m => {
-      const row = allRankings[m]?.find(r => r.name === p.name);
+    // Each entry: { points, wasTop3 } — hollow markers flag snapshots outside the top 3
+    points: keys.map(k => {
+      const row = allRankings[k]?.find(r => r.name === p.name);
       return row ? { points: row.points, wasTop3: row.rank <= 3 } : { points: null, wasTop3: false };
     }),
   }));
 
-  const allValues = series.flatMap(s => s.months.map(e => e.points)).filter(v => v != null);
+  const allValues = series.flatMap(s => s.points.map(e => e.points)).filter(v => v != null);
   if (allValues.length === 0) return null;
   const min = Math.min(...allValues);
   const max = Math.max(...allValues);
   const span = Math.max(max - min, 1);
 
   const W = 460, H = 88, PAD_X = 8, PAD_TOP = 8, PAD_BOTTOM = 18;
-  const x = i => PAD_X + (i / (months.length - 1)) * (W - PAD_X * 2);
+  const x = i => PAD_X + (i / (keys.length - 1)) * (W - PAD_X * 2);
   const y = v => PAD_TOP + (1 - (v - min) / span) * (H - PAD_TOP - PAD_BOTTOM);
+
+  // Label first, last, and each month boundary to avoid crowding
+  const labelFor = i => {
+    const d = keyDate(keys[i]);
+    if (i === 0 || i === keys.length - 1) return d.toLocaleString('en', { month: 'short' });
+    if (keyDate(keys[i - 1]).getMonth() !== d.getMonth()) return d.toLocaleString('en', { month: 'short' });
+    return null;
+  };
 
   return (
     <div style={{ padding: '12px 20px 4px', borderBottom: '1px solid #1e1e30', flexShrink: 0 }}>
       <div style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', marginBottom: '6px' }}>
-        RACE TO #1 — POINTS BY MONTH
+        RACE TO #1 — POINTS OVER TIME
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
-        {/* Month labels */}
-        {months.map((m, i) => (
-          <text
-            key={m}
-            x={x(i)}
-            y={H - 4}
-            textAnchor={i === 0 ? 'start' : i === months.length - 1 ? 'end' : 'middle'}
-            style={{ fontSize: '9px', fill: '#4b5580', fontWeight: 600 }}
-          >
-            {new Date(`${m}-15`).toLocaleString('en', { month: 'short' })}
-          </text>
-        ))}
+        {/* Time-axis labels */}
+        {keys.map((k, i) => {
+          const label = labelFor(i);
+          if (!label) return null;
+          return (
+            <text
+              key={k}
+              x={x(i)}
+              y={H - 4}
+              textAnchor={i === 0 ? 'start' : i === keys.length - 1 ? 'end' : 'middle'}
+              style={{ fontSize: '9px', fill: '#4b5580', fontWeight: 600 }}
+            >
+              {label}
+            </text>
+          );
+        })}
         {/* Series lines + dots */}
         {series.map((s, si) => {
-          const pts = s.months
+          const pts = s.points
             .map((e, i) => (e.points == null ? null : `${x(i)},${y(e.points)}`))
             .filter(Boolean)
             .join(' ');
@@ -62,10 +89,10 @@ function RaceSparkline({ allRankings, monthKey, rankings }) {
                 strokeLinecap="round"
                 opacity={si === 0 ? 1 : 0.75}
               />
-              {s.months.map((e, i) => {
+              {s.points.map((e, i) => {
                 if (e.points == null) return null;
-                const isLast = i === s.months.length - 1;
-                // Hollow marker = month spent outside the top 3
+                const isLast = i === s.points.length - 1;
+                // Hollow marker = snapshot spent outside the top 3
                 return e.wasTop3 ? (
                   <circle key={i} cx={x(i)} cy={y(e.points)} r={isLast ? 3 : 1.8} fill={SPARK_COLORS[si]} />
                 ) : (
@@ -87,7 +114,7 @@ function RaceSparkline({ allRankings, monthKey, rankings }) {
             <span style={{ width: 10, height: 3, borderRadius: 2, background: SPARK_COLORS[si], display: 'inline-block' }} />
             {s.name}
             <span style={{ color: '#6b7280', fontFamily: 'monospace', fontSize: '10px' }}>
-              {(s.months.at(-1)?.points ?? 0).toLocaleString()}
+              {(s.points.at(-1)?.points ?? 0).toLocaleString()}
             </span>
           </span>
         ))}
@@ -96,7 +123,7 @@ function RaceSparkline({ allRankings, monthKey, rankings }) {
   );
 }
 
-export default function RankingsDialog({ monthLabel, rankings, prevRankings, allRankings, monthKey, tour, onClose }) {
+export default function RankingsDialog({ monthLabel, rankings, prevRankings, allRankings, activeKey, tour, onClose }) {
   useEffect(() => {
     const handler = e => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handler);
@@ -150,7 +177,10 @@ export default function RankingsDialog({ monthLabel, rankings, prevRankings, all
               {monthLabel} — Rankings
             </div>
             <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
-              Top 32 {tour.toUpperCase()} Singles
+              Top {rankings.length} {tour.toUpperCase()} Singles
+              {/^\d{4}-\d{2}-\d{2}$/.test(activeKey ?? '') && (
+                <> · as of {keyDate(activeKey).toLocaleString('en', { month: 'short', day: 'numeric' })}</>
+              )}
             </div>
           </div>
           <button
@@ -169,7 +199,7 @@ export default function RankingsDialog({ monthLabel, rankings, prevRankings, all
         </div>
 
         {/* Race to #1 sparkline */}
-        <RaceSparkline allRankings={allRankings} monthKey={monthKey} rankings={rankings} />
+        <RaceSparkline allRankings={allRankings} activeKey={activeKey} rankings={rankings} />
 
         {/* Table header */}
         <div
