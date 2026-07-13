@@ -24,6 +24,13 @@ function getGhToken() {
  * @param {Record<string, string>} files  Map of gist filename → local file path
  */
 export async function updateGist(files) {
+  // Safety valve for local testing: SKIP_GIST_PUSH=1 node scripts/fetchRankings.js
+  // runs the full pipeline against a local file without touching the live Gist.
+  if (process.env.SKIP_GIST_PUSH) {
+    console.log('Gist update skipped (SKIP_GIST_PUSH is set).');
+    return false;
+  }
+
   const token = getGhToken();
   if (!token) {
     console.log('Gist update skipped (gh CLI not available or not authenticated).');

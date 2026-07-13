@@ -1,20 +1,11 @@
 import { useEffect } from 'react';
+import { rankingKeyDate as keyDate, isDateKey } from '../utils/rankingKeys.js';
 
 const SPARK_COLORS = ['#fbbf24', '#94a3b8', '#d97706']; // gold, silver, bronze
 
-// Rankings keys are "YYYY-MM" (legacy monthly → month end) or "YYYY-MM-DD"
-// (bi-weekly → exact date). Normalize for ordering and comparison.
-function keyDate(key) {
-  if (/^\d{4}-\d{2}$/.test(key)) {
-    const [y, m] = key.split('-').map(Number);
-    return new Date(y, m, 0);
-  }
-  const [y, m, d] = key.split('-').map(Number);
-  return new Date(y, m - 1, d);
-}
-
 // Inline SVG line chart: the active snapshot's top-3 players' points across
-// every earlier snapshot (monthly and bi-weekly), spaced evenly in order.
+// every earlier snapshot (monthly and bi-weekly), positioned proportionally
+// to real time so mixed cadences don't distort the trend.
 function RaceSparkline({ allRankings, activeKey, rankings }) {
   const activeDate = keyDate(activeKey);
   const keys = Object.keys(allRankings ?? {})
@@ -39,15 +30,20 @@ function RaceSparkline({ allRankings, activeKey, rankings }) {
   const span = Math.max(max - min, 1);
 
   const W = 460, H = 88, PAD_X = 8, PAD_TOP = 8, PAD_BOTTOM = 18;
-  const x = i => PAD_X + (i / (keys.length - 1)) * (W - PAD_X * 2);
+  // X position is proportional to real elapsed time, not snapshot index —
+  // a 2-week bi-weekly gap renders narrower than a full monthly gap.
+  const t0 = keyDate(keys[0]).getTime();
+  const t1 = keyDate(keys[keys.length - 1]).getTime();
+  const tSpan = Math.max(t1 - t0, 1);
+  const x = i => PAD_X + ((keyDate(keys[i]).getTime() - t0) / tSpan) * (W - PAD_X * 2);
   const y = v => PAD_TOP + (1 - (v - min) / span) * (H - PAD_TOP - PAD_BOTTOM);
 
-  // Label first, last, and each month boundary to avoid crowding
+  // Label the first point and each month boundary; never repeat a month, so a
+  // trailing bi-weekly point doesn't produce a duplicate label.
   const labelFor = i => {
     const d = keyDate(keys[i]);
-    if (i === 0 || i === keys.length - 1) return d.toLocaleString('en', { month: 'short' });
-    if (keyDate(keys[i - 1]).getMonth() !== d.getMonth()) return d.toLocaleString('en', { month: 'short' });
-    return null;
+    const isNewMonth = i === 0 || keyDate(keys[i - 1]).getMonth() !== d.getMonth();
+    return isNewMonth ? d.toLocaleString('en', { month: 'short' }) : null;
   };
 
   return (
@@ -178,7 +174,7 @@ export default function RankingsDialog({ monthLabel, rankings, prevRankings, all
             </div>
             <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
               Top {rankings.length} {tour.toUpperCase()} Singles
-              {/^\d{4}-\d{2}-\d{2}$/.test(activeKey ?? '') && (
+              {isDateKey(activeKey) && (
                 <> · as of {keyDate(activeKey).toLocaleString('en', { month: 'short', day: 'numeric' })}</>
               )}
             </div>

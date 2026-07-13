@@ -5,18 +5,9 @@ import MonthSummaryDialog from './MonthSummaryDialog.jsx';
 import RankingsDialog from './RankingsDialog.jsx';
 import PlayerStatsDialog from './PlayerStatsDialog.jsx';
 
-const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+import { rankingKeyDate } from '../utils/rankingKeys.js';
 
-// Rankings keys are either "YYYY-MM" (legacy monthly, maps to month end) or
-// "YYYY-MM-DD" (bi-weekly, exact date). Normalize for chronological ordering.
-function rankingKeyDate(key) {
-  if (/^\d{4}-\d{2}$/.test(key)) {
-    const [y, m] = key.split('-').map(Number);
-    return new Date(y, m, 0); // day 0 of next month = last day of this month
-  }
-  const [y, m, d] = key.split('-').map(Number);
-  return new Date(y, m - 1, d);
-}
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function Calendar({ currentDate, tournaments, allTournaments, tour, rankingsData, flashId }) {
   const [showSummary, setShowSummary] = useState(false);

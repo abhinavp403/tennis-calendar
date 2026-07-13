@@ -120,13 +120,24 @@ function abbreviateName(fullName) {
   return parts[0][0] + '. ' + parts.slice(1).join(' ');
 }
 
-// Parse the "As of" date from the page, e.g. {{As of|2026|6|29|df=UK|lc=y}}
-// → "2026-06-29". All ranking tables on the page share the same Monday date.
+// Parse the "As of" date, e.g. {{As of|2026|6|29|df=UK|lc=y}} → "2026-06-29".
+// Prefer the marker inside the ATP singles section — a global first-match could
+// hit an unrelated {{As of}} in the page lede. Reject implausible dates: a
+// future-dated key would make every later gap check negative and permanently
+// block new snapshots.
 function parseAsOfDate(wikitext) {
-  const m = wikitext.match(/\{\{As of\|(\d{4})\|(\d{1,2})\|(\d{1,2})/i);
+  const scope = parseSection(wikitext, 'ATP singles ranking') || wikitext;
+  const m = scope.match(/\{\{As of\|(\d{4})\|(\d{1,2})\|(\d{1,2})/i)
+    || wikitext.match(/\{\{As of\|(\d{4})\|(\d{1,2})\|(\d{1,2})/i);
   if (!m) return null;
   const [, y, mo, d] = m;
-  return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  const key = `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  const ageDays = (Date.now() - keyToDate(key)) / 86_400_000;
+  if (ageDays < -1 || ageDays > 45) {
+    console.error(`  ✗ Implausible "As of" date ${key} (${Math.round(ageDays)} days old) — skipping`);
+    return null;
+  }
+  return key;
 }
 
 // Normalize any ranking key to a UTC Date. Legacy "YYYY-MM" maps to that
@@ -212,22 +223,27 @@ export async function fetchMissingRankings(dataPath = DATA_PATH) {
 
   let updated = false;
 
-  if (storeAtp && atpPlayers.length > 0) {
+  // Require a mostly-complete table before storing: a partial parse (e.g. after
+  // a Wikipedia format change) would persist a junk snapshot AND its key would
+  // gate out the corrected re-fetch for ~2 weeks.
+  const MIN_PLAYERS = 10;
+
+  if (storeAtp && atpPlayers.length >= MIN_PLAYERS) {
     if (!data.atp) data.atp = {};
     data.atp[asOfDate] = atpPlayers;
     console.log(`  ✓ ATP rankings saved for ${asOfDate} (${atpPlayers.length} players)`);
     updated = true;
   } else if (storeAtp) {
-    console.log('  ✗ Could not parse ATP rankings');
+    console.log(`  ✗ ATP parse too sparse (${atpPlayers.length} players, need ${MIN_PLAYERS}) — not storing`);
   }
 
-  if (storeWta && wtaPlayers.length > 0) {
+  if (storeWta && wtaPlayers.length >= MIN_PLAYERS) {
     if (!data.wta) data.wta = {};
     data.wta[asOfDate] = wtaPlayers;
     console.log(`  ✓ WTA rankings saved for ${asOfDate} (${wtaPlayers.length} players)`);
     updated = true;
   } else if (storeWta) {
-    console.log('  ✗ Could not parse WTA rankings');
+    console.log(`  ✗ WTA parse too sparse (${wtaPlayers.length} players, need ${MIN_PLAYERS}) — not storing`);
   }
 
   if (updated) {
