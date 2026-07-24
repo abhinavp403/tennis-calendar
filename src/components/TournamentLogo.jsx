@@ -23,7 +23,7 @@ function abbreviate(name) {
     .slice(0, 3) || name.slice(0, 3).toUpperCase();
 }
 
-export default function TournamentLogo({ tournament }) {
+export default function TournamentLogo({ tournament, tour }) {
   const [imgError, setImgError] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipStyle, setTooltipStyle] = useState({});
@@ -159,7 +159,7 @@ export default function TournamentLogo({ tournament }) {
                 padding: '1px 5px',
               }}
             >
-              {tournament.level === 2000 ? 'Grand Slam' : tournament.level === 1500 ? 'ATP Finals' : tournament.level}
+              {tournament.level === 2000 ? 'Grand Slam' : tournament.level === 1500 ? `${(tour ?? '').toUpperCase()} Finals`.trim() || 'Finals' : tournament.level}
             </span>
             <span style={{ fontSize: '11px', color: '#9ca3af' }}>
               {DATE_ICON[tournament.dateType]}{' '}

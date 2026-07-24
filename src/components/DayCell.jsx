@@ -94,7 +94,7 @@ export default function DayCell({ day, dateStr, tournaments, isToday, tour, flas
       {/* Tournament logos */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', flex: 1, alignContent: 'flex-start' }}>
         {tournaments.map((t, idx) => (
-          <TournamentLogo key={`${t.id}-${t.dateType}-${idx}`} tournament={t} />
+          <TournamentLogo key={`${t.id}-${t.dateType}-${idx}`} tournament={t} tour={tour} />
         ))}
       </div>
     </div>
