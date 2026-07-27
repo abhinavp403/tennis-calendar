@@ -11,10 +11,11 @@ A desktop app built with **Electron + React + Vite** that displays the full 2026
 - 📅 **Monthly calendar view** — navigate through the full 2026 season month by month
 - 🏆 **Tournament final-day markers** — each tournament appears on its final day with a logo/badge
 - 🎾 **Grand Slam highlighting** — Grand Slams appear in distinct violet/purple with finals results (winner, runner-up, score)
-- 🔍 **Hover tooltips** — hover over any tournament to see name, location, surface, and level
+- 🔍 **Search** — jump to any tournament, or find a player by first *or* last name and open their profile
+- 🛈 **Hover tooltips** — hover over any tournament to see name, location, surface, and level
 - ✅ **Match results on hover** — completed tournaments show the winner, runner-up, and final score
 - 📋 **Month summary dialog** — a "Results" button opens a summary of all completed tournaments for that month
-- 📈 **Player Stats (YTD)** — a cumulative year-to-date tally of every player's wins and runner-up finishes from January through the current month, sorted by wins
+- 📈 **Player Stats (YTD)** — a season-long leaderboard ranked by *level-weighted points* (a Grand Slam counts far more than a stack of 250s), showing each player's titles, runner-ups, total finals, and points; click a name for a full profile (win %, best surface, per-surface breakdown)
 - 📊 **Monthly rankings** — a "Rankings" button shows the top 20 ATP/WTA players at end of each completed month, with points and ▲▼ movement indicators vs. the previous month
 - 🔵🩷 **ATP / WTA toggle** — switch between the men's and women's tour instantly
 - 🎨 **Vibrant dark theme** — colour-coded by tournament level (Grand Slam / 1500 / 1000 / 500 / 250) with glows and gradients
@@ -79,7 +80,7 @@ npm run build
 
 ## Web version (no install)
 
-Live at **https://tennis-calendar.vercel.app** (or wherever you deploy it on Vercel).
+Live at **https://tennis-calendar-ivory.vercel.app** (or wherever you deploy it on Vercel).
 
 The web build serves the same React app and fetches tournament data from the cloud Gist on load. Works on phones, tablets, and any browser — no install needed. Deploy your own copy by importing this repo into Vercel; no configuration required (settings live in `vercel.json`).
 
