@@ -9,6 +9,15 @@ const SURFACE_META = {
 };
 const surfaceKey = s => (SURFACE_META[s] ? s : 'Hard');
 
+// Leaderboard weighting: champion / runner-up points per tournament level,
+// mirroring the ATP & WTA ranking-point tables. This makes the YTD ranking
+// reflect how big each title is — a Grand Slam (2000) outweighs a stack of
+// 250s — instead of a raw title count.
+const CHAMPION_POINTS  = { 2000: 2000, 1500: 1500, 1000: 1000, 500: 500, 250: 250 };
+const RUNNER_UP_POINTS = { 2000: 1300, 1500: 1000, 1000: 650,  500: 330, 250: 165 };
+const championPoints = level => CHAMPION_POINTS[level] ?? level ?? 0;
+const runnerUpPoints = level => RUNNER_UP_POINTS[level] ?? Math.round((level ?? 0) * 0.65);
+
 export default function PlayerStatsDialog({ monthLabel, completedTournaments, tour, onClose }) {
   // hoveredPlayer = null | { name, top, left, placeAbove }
   const [hoveredPlayer, setHoveredPlayer] = useState(null);
@@ -60,7 +69,7 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
   const ensure = name => {
     if (!playerStats[name]) {
       playerStats[name] = {
-        wins: 0, runnerUp: 0,
+        wins: 0, runnerUp: 0, points: 0,
         winsList: [], runnerUpList: [],
         surfaceWins: { Hard: 0, 'Indoor Hard': 0, Clay: 0, Grass: 0 },
         surfaceFinals: { Hard: 0, 'Indoor Hard': 0, Clay: 0, Grass: 0 },
@@ -79,6 +88,7 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
     if (tournament.winner) {
       const p = ensure(tournament.winner);
       p.wins += 1;
+      p.points += championPoints(tournament.level);
       p.winsList.push({ ...entry, opponent: tournament.runner_up });
       p.surfaceWins[surf] += 1;
       p.surfaceFinals[surf] += 1;
@@ -86,6 +96,7 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
     if (tournament.runner_up) {
       const p = ensure(tournament.runner_up);
       p.runnerUp += 1;
+      p.points += runnerUpPoints(tournament.level);
       p.runnerUpList.push({ ...entry, opponent: tournament.winner });
       p.surfaceFinals[surf] += 1;
     }
@@ -97,21 +108,24 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
       name,
       wins: data.wins,
       runnerUp: data.runnerUp,
+      points: data.points,
       total: data.wins + data.runnerUp,
       winsList: data.winsList,
       runnerUpList: data.runnerUpList,
       surfaceWins: data.surfaceWins,
       surfaceFinals: data.surfaceFinals,
     }))
+    // Rank by level-weighted points, then titles, then runner-ups as tie-breaks.
     .sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
       if (b.wins !== a.wins) return b.wins - a.wins;
       return b.runnerUp - a.runnerUp;
     });
 
-  // Dense rank: ties (same wins AND runnerUp) share a rank number.
+  // Dense rank: players with equal points share a rank number.
   // The next distinct row uses (index + 1).
   for (let i = 0; i < stats.length; i++) {
-    if (i > 0 && stats[i].wins === stats[i - 1].wins && stats[i].runnerUp === stats[i - 1].runnerUp) {
+    if (i > 0 && stats[i].points === stats[i - 1].points) {
       stats[i].rank = stats[i - 1].rank;
     } else {
       stats[i].rank = i + 1;
@@ -155,7 +169,7 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
               {monthLabel} — Player Stats (YTD)
             </div>
             <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
-              {stats.length} player{stats.length !== 1 ? 's' : ''} — year-to-date cumulative
+              {stats.length} player{stats.length !== 1 ? 's' : ''} — ranked by level-weighted points (YTD)
             </div>
           </div>
           <button
@@ -177,7 +191,7 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '40px 1fr 60px 80px 60px',
+            gridTemplateColumns: '34px 1fr 52px 74px 54px 58px',
             padding: '10px 20px 6px',
             borderBottom: '1px solid #1e1e30',
             flexShrink: 0,
@@ -188,6 +202,7 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
           <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', textAlign: 'center' }}>WINS</span>
           <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', textAlign: 'center' }}>RUNNER-UP</span>
           <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', textAlign: 'center' }}>TOTAL</span>
+          <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', textAlign: 'center' }}>PTS</span>
         </div>
 
         {/* Stats list */}
@@ -202,7 +217,7 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
                 key={stat.name}
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: '40px 1fr 60px 80px 60px',
+                  gridTemplateColumns: '34px 1fr 52px 74px 54px 58px',
                   alignItems: 'center',
                   padding: '10px 0',
                   borderBottom: idx === stats.length - 1 ? 'none' : '1px solid #1a1a28',
@@ -269,16 +284,28 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
                   </span>
                 </div>
 
-                {/* Total */}
+                {/* Total finals (wins + runner-ups) */}
                 <span
                   style={{
                     fontSize: '13px',
                     fontWeight: '600',
                     textAlign: 'center',
-                    color: '#9ca3af',
+                    color: stat.total > 0 ? '#9ca3af' : '#4b5580',
                   }}
                 >
                   {stat.total}
+                </span>
+
+                {/* Points (level-weighted, the ranking key) */}
+                <span
+                  style={{
+                    fontSize: '13px',
+                    fontWeight: '700',
+                    textAlign: 'center',
+                    color: stat.points > 0 ? '#e5e7eb' : '#4b5580',
+                  }}
+                >
+                  {stat.points.toLocaleString()}
                 </span>
               </div>
             ))
