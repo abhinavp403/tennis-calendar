@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import PlayerProfileDialog from './PlayerProfileDialog.jsx';
+import { buildPlayerStats } from '../utils/playerStats.js';
 
 const SURFACE_META = {
   Hard:          { short: 'Hard',   color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' },
@@ -7,16 +8,6 @@ const SURFACE_META = {
   Clay:          { short: 'Clay',   color: '#f97316', bg: 'rgba(249,115,22,0.15)' },
   Grass:         { short: 'Grass',  color: '#22c55e', bg: 'rgba(34,197,94,0.15)' },
 };
-const surfaceKey = s => (SURFACE_META[s] ? s : 'Hard');
-
-// Leaderboard weighting: champion / runner-up points per tournament level,
-// mirroring the ATP & WTA ranking-point tables. This makes the YTD ranking
-// reflect how big each title is — a Grand Slam (2000) outweighs a stack of
-// 250s — instead of a raw title count.
-const CHAMPION_POINTS  = { 2000: 2000, 1500: 1500, 1000: 1000, 500: 500, 250: 250 };
-const RUNNER_UP_POINTS = { 2000: 1300, 1500: 1000, 1000: 650,  500: 330, 250: 165 };
-const championPoints = level => CHAMPION_POINTS[level] ?? level ?? 0;
-const runnerUpPoints = level => RUNNER_UP_POINTS[level] ?? Math.round((level ?? 0) * 0.65);
 
 export default function PlayerStatsDialog({ monthLabel, completedTournaments, tour, onClose }) {
   // hoveredPlayer = null | { name, top, left, placeAbove }
@@ -63,74 +54,9 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
     return level != null ? String(level) : '';
   };
 
-  // Aggregate player stats: name → {wins, runnerUp, winsList, runnerUpList, surfaceWins}
-  // Each list entry carries name/level/surface/score so the profile dialog can re-render rich detail.
-  const playerStats = {};
-  const ensure = name => {
-    if (!playerStats[name]) {
-      playerStats[name] = {
-        wins: 0, runnerUp: 0, points: 0,
-        winsList: [], runnerUpList: [],
-        surfaceWins: { Hard: 0, 'Indoor Hard': 0, Clay: 0, Grass: 0 },
-        surfaceFinals: { Hard: 0, 'Indoor Hard': 0, Clay: 0, Grass: 0 },
-      };
-    }
-    return playerStats[name];
-  };
-  for (const tournament of completedTournaments) {
-    const entry = {
-      name: tournament.name,
-      level: tournament.level,
-      surface: tournament.surface,
-      score: tournament.score,
-    };
-    const surf = surfaceKey(tournament.surface);
-    if (tournament.winner) {
-      const p = ensure(tournament.winner);
-      p.wins += 1;
-      p.points += championPoints(tournament.level);
-      p.winsList.push({ ...entry, opponent: tournament.runner_up });
-      p.surfaceWins[surf] += 1;
-      p.surfaceFinals[surf] += 1;
-    }
-    if (tournament.runner_up) {
-      const p = ensure(tournament.runner_up);
-      p.runnerUp += 1;
-      p.points += runnerUpPoints(tournament.level);
-      p.runnerUpList.push({ ...entry, opponent: tournament.winner });
-      p.surfaceFinals[surf] += 1;
-    }
-  }
-
-  // Convert to array and sort by wins (desc), then by runner-up (desc)
-  const stats = Object.entries(playerStats)
-    .map(([name, data]) => ({
-      name,
-      wins: data.wins,
-      runnerUp: data.runnerUp,
-      points: data.points,
-      total: data.wins + data.runnerUp,
-      winsList: data.winsList,
-      runnerUpList: data.runnerUpList,
-      surfaceWins: data.surfaceWins,
-      surfaceFinals: data.surfaceFinals,
-    }))
-    // Rank by level-weighted points, then titles, then runner-ups as tie-breaks.
-    .sort((a, b) => {
-      if (b.points !== a.points) return b.points - a.points;
-      if (b.wins !== a.wins) return b.wins - a.wins;
-      return b.runnerUp - a.runnerUp;
-    });
-
-  // Dense rank: players with equal points share a rank number.
-  // The next distinct row uses (index + 1).
-  for (let i = 0; i < stats.length; i++) {
-    if (i > 0 && stats[i].points === stats[i - 1].points) {
-      stats[i].rank = stats[i - 1].rank;
-    } else {
-      stats[i].rank = i + 1;
-    }
-  }
+  // Aggregate + rank players (level-weighted points). Shared with the header
+  // player search so both surface an identical leaderboard.
+  const stats = buildPlayerStats(completedTournaments);
 
   return (
     <div

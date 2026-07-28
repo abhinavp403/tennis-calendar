@@ -6,6 +6,7 @@ import RankingsDialog from './RankingsDialog.jsx';
 import PlayerStatsDialog from './PlayerStatsDialog.jsx';
 
 import { rankingKeyDate } from '../utils/rankingKeys.js';
+import { cumulativeCompleted } from '../utils/playerStats.js';
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -31,15 +32,9 @@ export default function Calendar({ currentDate, tournaments, allTournaments, tou
     dayjs(t.end).year() === currentDate.year()
   ).sort((a, b) => (a.end > b.end ? 1 : -1));
 
-  // Cumulative: all tournaments completed from start of season through end of current month
-  const seasonStart = currentDate.startOf('year');
-  const monthEndDate = currentDate.endOf('month');
-  const cumulativeTournaments = statsSource.filter(t =>
-    t.winner &&
-    dayjs(t.end).isBefore(today) &&
-    dayjs(t.end).isSameOrAfter(seasonStart) &&
-    dayjs(t.end).isSameOrBefore(monthEndDate)
-  ).sort((a, b) => (a.end > b.end ? 1 : -1));
+  // Cumulative: all tournaments completed from start of season through end of
+  // current month (shared with the header player search).
+  const cumulativeTournaments = cumulativeCompleted(statsSource, currentDate);
 
   // Build date → [tournament, ...] map; tournaments appear only on their end date
   const tournamentsByDate = {};

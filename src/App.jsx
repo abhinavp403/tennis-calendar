@@ -3,8 +3,11 @@ import dayjs from 'dayjs';
 import Calendar from './components/Calendar.jsx';
 import AppLogo from './components/AppLogo.jsx';
 import TournamentSearch from './components/TournamentSearch.jsx';
+import PlayerSearch from './components/PlayerSearch.jsx';
+import PlayerProfileDialog from './components/PlayerProfileDialog.jsx';
 import ChampionsWallDialog from './components/ChampionsWallDialog.jsx';
 import { loadInitialData, loadData, getSyncTime, setSyncTime, triggerSync, isWebMode } from './dataSource.js';
+import { cumulativeCompleted, buildPlayerStats } from './utils/playerStats.js';
 
 function formatSyncTime(iso) {
   if (!iso) return null;
@@ -38,6 +41,8 @@ export default function App() {
   // Tournament id to flash after a search jump
   const [flashId, setFlashId] = useState(null);
   const [showChampionsWall, setShowChampionsWall] = useState(false);
+  // Player stat selected from the header search → opens the profile drill-down
+  const [profilePlayer, setProfilePlayer] = useState(null);
 
   const jumpToTournament = useCallback(t => {
     setTour(t.tour);
@@ -99,6 +104,10 @@ export default function App() {
     ? tourTournaments
     : tourTournaments.filter(t => t.surface === surfaceFilter);
   const rankingsData = data.rankings;
+
+  // Player Stats (YTD) leaderboard for the current tour — drives the player
+  // search. Same source and ranking the Player Stats dialog uses.
+  const ytdPlayers = buildPlayerStats(cumulativeCompleted(tourTournaments, currentDate));
 
   // Upcoming tournaments: starting today through +7 days (current tour, ignores surface filter)
   const todayStr = dayjs().format('YYYY-MM-DD');
@@ -311,6 +320,9 @@ export default function App() {
         {/* Search / jump to tournament */}
         <TournamentSearch allData={data.tournaments} onJump={jumpToTournament} />
 
+        {/* Search Player Stats (YTD) → open profile */}
+        <PlayerSearch players={ytdPlayers} tour={tour} onSelect={setProfilePlayer} />
+
         {/* Champions Wall */}
         <button
           onClick={() => setShowChampionsWall(true)}
@@ -408,6 +420,15 @@ export default function App() {
           tournaments={tourTournaments}
           tour={tour}
           onClose={() => setShowChampionsWall(false)}
+        />
+      )}
+
+      {profilePlayer && (
+        <PlayerProfileDialog
+          stat={profilePlayer}
+          tour={tour}
+          monthLabel={currentDate.format('MMMM YYYY')}
+          onClose={() => setProfilePlayer(null)}
         />
       )}
 
