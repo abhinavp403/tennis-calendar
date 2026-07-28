@@ -9,9 +9,10 @@
  * Run automatically: via ~/Library/LaunchAgents/com.tennis.calendar.weeklyupdate.plist (every Sunday 9am)
  */
 
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import { updateGistContent, fetchGistFiles } from './updateGist.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_PATH = path.join(__dirname, '../data/tournaments.json');
@@ -199,7 +200,11 @@ async function checkTournamentDate(tournament, tour) {
 }
 
 export async function fixTournamentDates(dataPath = DATA_PATH) {
-  const data = JSON.parse(readFileSync(dataPath, 'utf-8'));
+  // Local cache when present (Electron app), else the live Gist (CLI / launchd).
+  const localAvailable = dataPath && existsSync(dataPath);
+  const data = localAvailable
+    ? JSON.parse(readFileSync(dataPath, 'utf-8'))
+    : (await fetchGistFiles(['tournaments.json']))['tournaments.json'];
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -238,8 +243,10 @@ export async function fixTournamentDates(dataPath = DATA_PATH) {
   }
 
   if (updated) {
-    writeFileSync(dataPath, JSON.stringify(data, null, 2) + '\n');
+    const content = JSON.stringify(data, null, 2) + '\n';
+    if (localAvailable) writeFileSync(dataPath, content); // refresh the app's cache
     console.log('\ntournaments.json updated with corrected dates.');
+    await updateGistContent({ 'tournaments.json': content });
   } else {
     console.log('\nAll dates verified — no changes needed.');
   }

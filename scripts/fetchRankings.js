@@ -7,10 +7,10 @@
  * new date keys ("YYYY-MM-DD").
  */
 
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import { updateGist } from './updateGist.js';
+import { updateGistContent, fetchGistFiles } from './updateGist.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_PATH = path.join(__dirname, '../data/rankings.json');
@@ -176,7 +176,11 @@ function shouldStore(existingKeys, asOfDate) {
 }
 
 export async function fetchMissingRankings(dataPath = DATA_PATH) {
-  const data = JSON.parse(readFileSync(dataPath, 'utf-8'));
+  // Local cache when present (Electron app), else the live Gist (CLI / launchd).
+  const localAvailable = dataPath && existsSync(dataPath);
+  const data = localAvailable
+    ? JSON.parse(readFileSync(dataPath, 'utf-8'))
+    : (await fetchGistFiles(['rankings.json']))['rankings.json'];
 
   console.log('Fetching current rankings from Wikipedia...');
   const wikitext = await getWikitext(WIKI_PAGE);
@@ -256,9 +260,10 @@ export async function fetchMissingRankings(dataPath = DATA_PATH) {
     Object.keys(data.wta).sort().forEach(k => { sortedWta[k] = data.wta[k]; });
     data.wta = sortedWta;
 
-    writeFileSync(dataPath, JSON.stringify(data, null, 2) + '\n');
+    const content = JSON.stringify(data, null, 2) + '\n';
+    if (localAvailable) writeFileSync(dataPath, content); // refresh the app's cache
     console.log('rankings.json updated.');
-    await updateGist({ 'rankings.json': dataPath });
+    await updateGistContent({ 'rankings.json': content });
   }
 
   return updated;

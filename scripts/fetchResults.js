@@ -3,10 +3,10 @@
  * for any tournament whose end date has passed but lacks results in tournaments.json.
  */
 
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import { updateGist } from './updateGist.js';
+import { updateGistContent, fetchGistFiles } from './updateGist.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_PATH = path.join(__dirname, '../data/tournaments.json');
@@ -242,7 +242,12 @@ async function fetchResultForTournament(tournament, tour) {
 }
 
 export async function fetchMissingResults(dataPath = DATA_PATH) {
-  const data = JSON.parse(readFileSync(dataPath, 'utf-8'));
+  // Read from the local cache when present (the Electron app passes its userData
+  // path); otherwise pull the live Gist (CLI / launchd — there is no repo data/).
+  const localAvailable = dataPath && existsSync(dataPath);
+  const data = localAvailable
+    ? JSON.parse(readFileSync(dataPath, 'utf-8'))
+    : (await fetchGistFiles(['tournaments.json']))['tournaments.json'];
   const today = new Date().toISOString().slice(0, 10);
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   let updated = false;
@@ -281,9 +286,10 @@ export async function fetchMissingResults(dataPath = DATA_PATH) {
   }
 
   if (updated) {
-    writeFileSync(dataPath, JSON.stringify(data, null, 2) + '\n');
+    const content = JSON.stringify(data, null, 2) + '\n';
+    if (localAvailable) writeFileSync(dataPath, content); // refresh the app's cache
     console.log('tournaments.json updated with new results.');
-    await updateGist({ 'tournaments.json': dataPath });
+    await updateGistContent({ 'tournaments.json': content });
   } else {
     console.log('No missing results to update.');
   }
