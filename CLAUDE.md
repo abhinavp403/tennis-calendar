@@ -22,13 +22,14 @@ There are no test or lint commands. When changing data-pipeline scripts, run the
 
 The non-obvious thing about this repo is that **the running app reads data from a GitHub Gist, not from the bundled JSON files**. Understand this before changing anything in `electron/main.js` or the `scripts/` folder.
 
-### Three storage locations for the same JSON
+### Two storage locations for the same JSON
 
-1. **`data/tournaments.json` and `data/rankings.json`** — committed to the repo. Used in `npm run dev:vite` (browser-only) and as the initial seed for new installs. NOT what the production app reads at runtime.
-2. **GitHub Gist** (`c75d3f961da94fdeed16cdbd8e2ec08e`) — the live source of truth. The desktop app fetches from `gist.githubusercontent.com/.../raw/{file}` on every launch.
-3. **`app.getPath('userData')`** — local cache the renderer reads from. Populated on each launch by `syncUserData()` in `electron/main.js`, with 8-second timeout and silent fallback to the existing cached file if offline.
+There is **no `data/` directory** — the bundled `data/tournaments.json` / `data/rankings.json` were removed (commit `cf12e00`, "fetch exclusively from Gist"). The two live locations are:
 
-So: editing `data/tournaments.json` and rebuilding will NOT change what users see. The data-maintenance scripts (`fetchResults.js`, `fetchRankings.js`, `fixDates.js`) write to the repo file AND push to the Gist via `scripts/updateGist.js`, which uses `gh auth token` for credentials. The Gist push is what actually updates users.
+1. **GitHub Gist** (`c75d3f961da94fdeed16cdbd8e2ec08e`) — the source of truth. The app fetches from `gist.githubusercontent.com/.../raw/{file}` on every launch; `dev:vite` fetches it too (see `src/dataSource.js`).
+2. **`app.getPath('userData')`** — local cache the renderer reads from. Populated on each launch by `syncUserData()` in `electron/main.js`, with an 8-second timeout and silent fallback to the existing cached file if offline.
+
+The data-maintenance scripts (`fetchResults.js`, `fetchRankings.js`, `fixDates.js`) **read from and write to the Gist**, via helpers in `scripts/updateGist.js` (`fetchGistFiles` reads authoritative content through the GitHub API; `updateGistContent` pushes). Auth is `gh auth token` (or `GH_TOKEN`/`GITHUB_TOKEN` in CI). Each script takes an optional local `dataPath`: when the file **exists** it reads/writes that (the Electron app passes its userData cache), otherwise it falls back to the Gist (CLI / launchd). The Gist push is what actually updates users; set `SKIP_GIST_PUSH=1` for a dry run.
 
 ### Background scripts run inside the Electron main process
 
@@ -40,11 +41,11 @@ So: editing `data/tournaments.json` and rebuilding will NOT change what users se
 
 ### Weekly automation
 
-`scripts/weeklyUpdate.sh` runs `fixDates.js`, `fetchResults.js`, `fetchRankings.js` in sequence and is wired to launchd locally (not CI). The scripts push to the Gist directly — no git commit needed.
+`scripts/weeklyUpdate.sh` runs `fixDates.js`, `fetchResults.js`, `fetchRankings.js` in sequence and is wired to launchd locally (not CI). Each reads the current Gist and pushes its changes back — no git commit needed. Because they run sequentially and both `fixDates` and `fetchResults` touch `tournaments.json`, reads go through the GitHub API (read-your-writes) so the second step sees the first's push. (`fixDates` used to only write the shared local file; now it pushes to the Gist itself.)
 
 ## Data shapes
 
-**`tournaments.json`**: `{atp: Tournament[], wta: Tournament[]}`. Each tournament has `id`, `name`, `level` (250 / 500 / 1000 / 1500 / 2000), `start`, `end` (ISO date strings), `location`, `surface`, `logo` (PNG in `public/logos/`), and optional `winner`, `runner_up`, `score` once completed.
+**`tournaments.json`**: `{atp: Tournament[], wta: Tournament[]}`. Each tournament has `id`, `name`, `level` (250 / 500 / 1000 / 1500 / 2000), `start`, `end` (ISO date strings), `location`, `surface`, `logo` (PNG in `public/logos/`), and optional `winner`, `runner_up`, `score` once completed. Names are abbreviated (`"C. Alcaraz"`); optional `winner_full` / `runner_up_full` carry the un-abbreviated form (`"Carlos Alcaraz"`). These are populated by **`scripts/enrichPlayerNames.js`**, which resolves each player's first name from *their own Wikipedia article* (search `"<lastname> tennis player"`, match surname + initial) — independent of tournament-page scraping, so it isn't affected by tournament-name/page-title mismatches. `buildPlayerStats` (`src/utils/playerStats.js`) uses them to power first-name player search; a player unresolved there simply stays last-name-searchable. The enrichment runs weekly after `fetchResults.js`.
 
 **`rankings.json`**: `{atp: { [key]: Player[] }, wta: { [key]: Player[] }}`. Each player: `rank`, `name`, `country`, `points`, optional `movement`. Snapshot keys are **mixed**: legacy `"YYYY-MM"` (monthly, Jan–Jun 2026, treated as the month's last day) and `"YYYY-MM-DD"` (bi-weekly, the exact Monday the rankings reflect, captured going forward). `fetchRankings.js` parses the Wikipedia page's `{{As of|Y|M|D}}` marker and stores a new snapshot only when it's ≥13 days after the latest one. Consumers normalize both key forms via a `keyDate`/`rankingKeyDate` helper (see `Calendar.jsx` and `RankingsDialog.jsx`); Wikipedia exposes only the current week, so older bi-weekly history cannot be backfilled.
 
@@ -60,7 +61,7 @@ So: editing `data/tournaments.json` and rebuilding will NOT change what users se
 
 `.github/workflows/update-ics.yml` regenerates and commits the .ics whenever `data/tournaments.json` or the script changes. The file is served via GitHub Pages at `https://abhinavp403.github.io/tennis-calendar/tennis_calendar.ics` for URL subscriptions.
 
-Note: this pipeline reads from the committed `data/tournaments.json`, NOT the Gist. Currently the repo file and Gist can drift — keep this in mind if winners appear in the app but not in the .ics, or vice versa.
+**Stale/broken:** this pipeline reads the committed `data/tournaments.json`, which no longer exists (removed in `cf12e00`). So `.github/workflows/update-ics.yml` can't regenerate the .ics, and the published `tennis_calendar.ics` is frozen at whatever was last committed. To revive it, point `export_ics.py` at the Gist (as the JS scripts now do) or trigger it from Gist content — it is NOT wired to the Gist today.
 
 ## Distribution
 
@@ -68,7 +69,7 @@ Note: this pipeline reads from the committed `data/tournaments.json`, NOT the Gi
 
 ## Gotchas
 
-- **`dev:vite` won't show data** because `window.electronAPI` is undefined in a plain browser. Use `npm run dev` for any data-touching work.
-- **Wikipedia scrapers are fragile** — `fixDates.js` has a hand-maintained `WIKI_NAME_MAP` for tournaments whose Wikipedia page name differs from the display name. When adding tournaments, check whether they need a mapping.
+- **`dev:vite` shows real data** — in web mode `src/dataSource.js` fetches the Gist directly (no `window.electronAPI` needed). `npm run dev` (Electron) is only required when exercising the IPC bridge or the in-app background update tasks.
+- **Wikipedia scrapers are fragile** — both `fixDates.js` and `fetchResults.js` have a hand-maintained `WIKI_NAME_MAP` for tournaments whose Wikipedia page name differs from the display name. When a scraper resolves the wrong page, results/full-names silently don't get captured for that tournament (guarded against writing *wrong* data, but it means a gap). When adding tournaments, check whether they need a mapping.
 - **Vite `base: './'`** is required so `file://` URLs work in the packaged Electron app. Don't change this.
 - **Preload must stay `.cjs`** — Electron's `contextBridge` won't load it as ESM in the security context.

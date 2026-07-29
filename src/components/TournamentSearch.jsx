@@ -15,18 +15,6 @@ export default function TournamentSearch({ allData, onJump }) {
   const inputRef = useRef(null);
   const rootRef = useRef(null);
 
-  // ⌘K / Ctrl+K focuses the search box
-  useEffect(() => {
-    const handler = e => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        inputRef.current?.focus();
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, []);
-
   // Close dropdown on outside click
   useEffect(() => {
     const handler = e => {
@@ -37,7 +25,7 @@ export default function TournamentSearch({ allData, onJump }) {
   }, []);
 
   const q = query.trim().toLowerCase();
-  const results = q.length < 2 ? [] : ['atp', 'wta'].flatMap(tour =>
+  const results = q.length < 1 ? [] : ['atp', 'wta'].flatMap(tour =>
     (allData?.[tour] ?? [])
       .filter(t => t.name.toLowerCase().includes(q) || (t.location ?? '').toLowerCase().includes(q))
       .map(t => ({ ...t, tour }))
@@ -74,7 +62,7 @@ export default function TournamentSearch({ allData, onJump }) {
       <input
         ref={inputRef}
         value={query}
-        placeholder="Find tournament…  ⌘K"
+        placeholder="Find tournament…"
         onChange={e => { setQuery(e.target.value); setOpen(true); setActiveIdx(0); }}
         onFocus={() => setOpen(true)}
         onKeyDown={onKeyDown}
