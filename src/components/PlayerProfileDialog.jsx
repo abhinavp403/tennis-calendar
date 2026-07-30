@@ -110,9 +110,6 @@ export default function PlayerProfileDialog({ stat, tour, monthLabel, onClose })
               {stat.country && <span style={{ marginRight: '8px' }}>{countryFlag(stat.country)}</span>}
               {stat.name}
             </div>
-            <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px', letterSpacing: '0.4px' }}>
-              {tour.toUpperCase()} · {monthLabel} (YTD)
-            </div>
           </div>
           <button
             onClick={onClose}
