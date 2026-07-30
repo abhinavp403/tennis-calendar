@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { rankingKeyDate as keyDate, isDateKey } from '../utils/rankingKeys.js';
+import { countryFlag } from '../utils/flags.js';
 
 const SPARK_COLORS = ['#fbbf24', '#94a3b8', '#d97706']; // gold, silver, bronze
 
@@ -265,16 +266,18 @@ export default function RankingsDialog({ monthLabel, rankings, prevRankings, all
                 {/* Player name + country */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
                   <span
+                    title={player.country}
                     style={{
-                      fontSize: '10px',
+                      fontSize: '13px',
                       color: '#6b7280',
                       fontWeight: '600',
                       letterSpacing: '0.5px',
                       flexShrink: 0,
-                      width: '28px',
+                      width: '24px',
+                      textAlign: 'center',
                     }}
                   >
-                    {player.country}
+                    {countryFlag(player.country) || player.country}
                   </span>
                   <span
                     style={{

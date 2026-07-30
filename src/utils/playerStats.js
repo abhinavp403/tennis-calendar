@@ -37,7 +37,7 @@ export function cumulativeCompleted(tourTournaments, currentDate) {
 // level-weighted points, then titles, then runner-ups. Ties (equal points)
 // share a dense rank. Each stat carries the rich win/runner-up lists and
 // per-surface tallies the dialogs need.
-export function buildPlayerStats(completedTournaments) {
+export function buildPlayerStats(completedTournaments, countryByName = {}) {
   const playerStats = {};
   const ensure = name => {
     if (!playerStats[name]) {
@@ -85,6 +85,7 @@ export function buildPlayerStats(completedTournaments) {
     .map(([name, data]) => ({
       name,
       fullName: data.fullName,
+      country: countryByName[name] ?? null,
       wins: data.wins,
       runnerUp: data.runnerUp,
       points: data.points,

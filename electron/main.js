@@ -21,10 +21,15 @@ async function syncUserData() {
   const userDataDir = app.getPath('userData');
   mkdirSync(userDataDir, { recursive: true });
 
-  const EMPTY = { 'tournaments.json': '{"atp":[],"wta":[]}', 'rankings.json': '{"atp":{},"wta":{}}' };
+  const EMPTY = {
+    'tournaments.json': '{"atp":[],"wta":[]}',
+    'rankings.json': '{"atp":{},"wta":{}}',
+    'players.json': '{"atp":{},"wta":{}}',
+  };
+  const DATA_FILES = ['tournaments.json', 'rankings.json', 'players.json'];
 
   // Ensure userData files exist (empty structure if Gist unreachable on first launch)
-  for (const file of ['tournaments.json', 'rankings.json']) {
+  for (const file of DATA_FILES) {
     if (!existsSync(path.join(userDataDir, file))) {
       writeFileSync(path.join(userDataDir, file), EMPTY[file]);
     }
@@ -32,7 +37,7 @@ async function syncUserData() {
 
   // Pull latest data from Gist (silent fail if offline)
   try {
-    for (const file of ['tournaments.json', 'rankings.json']) {
+    for (const file of DATA_FILES) {
       const res = await fetch(`${GIST_RAW_BASE}/${file}`, { signal: AbortSignal.timeout(8000) });
       if (res.ok) {
         const text = await res.text();

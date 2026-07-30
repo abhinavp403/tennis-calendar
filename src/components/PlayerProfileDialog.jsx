@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { countryFlag } from '../utils/flags.js';
 
 const SURFACE_META = {
   Hard:          { short: 'Hard',   color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' },
@@ -106,6 +107,7 @@ export default function PlayerProfileDialog({ stat, tour, monthLabel, onClose })
         >
           <div>
             <div style={{ fontSize: '20px', fontWeight: '700', color: 'white' }}>
+              {stat.country && <span style={{ marginRight: '8px' }}>{countryFlag(stat.country)}</span>}
               {stat.name}
             </div>
             <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px', letterSpacing: '0.4px' }}>

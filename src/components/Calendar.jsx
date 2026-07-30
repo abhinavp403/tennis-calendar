@@ -10,7 +10,7 @@ import { cumulativeCompleted } from '../utils/playerStats.js';
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-export default function Calendar({ currentDate, tournaments, allTournaments, tour, rankingsData, flashId }) {
+export default function Calendar({ currentDate, tournaments, allTournaments, tour, rankingsData, players, flashId }) {
   const [showSummary, setShowSummary] = useState(false);
   const [showRankings, setShowRankings] = useState(false);
   const [showStats, setShowStats] = useState(false);
@@ -198,6 +198,7 @@ export default function Calendar({ currentDate, tournaments, allTournaments, tou
           monthLabel={monthLabel}
           completedTournaments={cumulativeTournaments}
           tour={tour}
+          countryByName={players?.[tour]}
           onClose={() => setShowStats(false)}
         />
       )}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import PlayerProfileDialog from './PlayerProfileDialog.jsx';
 import { buildPlayerStats } from '../utils/playerStats.js';
+import { countryFlag } from '../utils/flags.js';
 
 const SURFACE_META = {
   Hard:          { short: 'Hard',   color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' },
@@ -9,7 +10,7 @@ const SURFACE_META = {
   Grass:         { short: 'Grass',  color: '#22c55e', bg: 'rgba(34,197,94,0.15)' },
 };
 
-export default function PlayerStatsDialog({ monthLabel, completedTournaments, tour, onClose }) {
+export default function PlayerStatsDialog({ monthLabel, completedTournaments, tour, countryByName, onClose }) {
   // hoveredPlayer = null | { name, top, left, placeAbove }
   const [hoveredPlayer, setHoveredPlayer] = useState(null);
   // selectedPlayer = null | string (player name)
@@ -56,7 +57,7 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
 
   // Aggregate + rank players (level-weighted points). Shared with the header
   // player search so both surface an identical leaderboard.
-  const stats = buildPlayerStats(completedTournaments);
+  const stats = buildPlayerStats(completedTournaments, countryByName);
 
   return (
     <div
@@ -179,6 +180,9 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
                   onMouseOver={e => (e.currentTarget.style.textDecorationColor = accentColor)}
                   onMouseOut={e => (e.currentTarget.style.textDecorationColor = 'transparent')}
                 >
+                  {stat.country && (
+                    <span style={{ marginRight: '6px', textDecoration: 'none' }}>{countryFlag(stat.country)}</span>
+                  )}
                   {stat.name}
                 </span>
 

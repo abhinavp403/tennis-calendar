@@ -7,6 +7,7 @@ const GIST_RAW_BASE = 'https://gist.githubusercontent.com/abhinavp403/c75d3f961d
 
 const EMPTY_TOURNAMENTS = { atp: [], wta: [] };
 const EMPTY_RANKINGS = { atp: {}, wta: {} };
+const EMPTY_PLAYERS = { atp: {}, wta: {} };
 
 export const isWebMode = () =>
   typeof window === 'undefined' || !window.electronAPI;
@@ -18,9 +19,10 @@ export function loadInitialData() {
     return {
       tournaments: window.electronAPI.getTournaments?.() ?? EMPTY_TOURNAMENTS,
       rankings: window.electronAPI.getRankings?.() ?? EMPTY_RANKINGS,
+      players: window.electronAPI.getPlayers?.() ?? EMPTY_PLAYERS,
     };
   }
-  return { tournaments: EMPTY_TOURNAMENTS, rankings: EMPTY_RANKINGS };
+  return { tournaments: EMPTY_TOURNAMENTS, rankings: EMPTY_RANKINGS, players: EMPTY_PLAYERS };
 }
 
 // Async fetch of the latest data.
@@ -28,13 +30,16 @@ export function loadInitialData() {
 export async function loadData() {
   if (!isWebMode()) return loadInitialData();
 
-  const [tRes, rRes] = await Promise.all([
+  const [tRes, rRes, pRes] = await Promise.all([
     fetch(`${GIST_RAW_BASE}/tournaments.json`, { cache: 'no-cache' }),
     fetch(`${GIST_RAW_BASE}/rankings.json`, { cache: 'no-cache' }),
+    fetch(`${GIST_RAW_BASE}/players.json`, { cache: 'no-cache' }),
   ]);
   if (!tRes.ok || !rRes.ok) throw new Error('Failed to load data from Gist');
   const [tournaments, rankings] = await Promise.all([tRes.json(), rRes.json()]);
-  return { tournaments, rankings };
+  // players.json is supplementary (country flags) — tolerate it being missing.
+  const players = pRes.ok ? await pRes.json() : EMPTY_PLAYERS;
+  return { tournaments, rankings, players };
 }
 
 const SYNC_KEY = 'tennis_calendar_last_synced';

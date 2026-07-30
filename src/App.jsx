@@ -107,7 +107,7 @@ export default function App() {
 
   // Player Stats (YTD) leaderboard for the current tour — drives the player
   // search. Same source and ranking the Player Stats dialog uses.
-  const ytdPlayers = buildPlayerStats(cumulativeCompleted(tourTournaments, currentDate));
+  const ytdPlayers = buildPlayerStats(cumulativeCompleted(tourTournaments, currentDate), data.players?.[tour]);
 
   // Upcoming tournaments: starting today through +7 days (current tour, ignores surface filter)
   const todayStr = dayjs().format('YYYY-MM-DD');
@@ -409,6 +409,7 @@ export default function App() {
               allTournaments={tourTournaments}
               tour={tour}
               rankingsData={rankingsData}
+              players={data.players}
               flashId={flashId}
             />
           </div>

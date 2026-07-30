@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { countryFlag } from '../utils/flags.js';
 
 // Accent-insensitive so "felix" matches "Félix".
 const deburr = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -120,6 +121,7 @@ export default function PlayerSearch({ players, tour, onSelect }) {
                 </span>
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontSize: '12px', fontWeight: '600', color: '#e5e7eb', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {p.country && <span style={{ marginRight: '5px' }}>{countryFlag(p.country)}</span>}
                     {p.fullName}
                   </div>
                   <div style={{ fontSize: '10px', color: '#6b7280', whiteSpace: 'nowrap' }}>
