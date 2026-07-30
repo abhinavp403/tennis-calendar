@@ -5,6 +5,7 @@ import AppLogo from './components/AppLogo.jsx';
 import TournamentSearch from './components/TournamentSearch.jsx';
 import PlayerSearch from './components/PlayerSearch.jsx';
 import PlayerProfileDialog from './components/PlayerProfileDialog.jsx';
+import MonthYearPicker from './components/MonthYearPicker.jsx';
 import ChampionsWallDialog from './components/ChampionsWallDialog.jsx';
 import { loadInitialData, loadData, getSyncTime, setSyncTime, triggerSync, isWebMode } from './dataSource.js';
 import { cumulativeCompleted, buildPlayerStats } from './utils/playerStats.js';
@@ -43,6 +44,7 @@ export default function App() {
   const [showChampionsWall, setShowChampionsWall] = useState(false);
   // Player stat selected from the header search → opens the profile drill-down
   const [profilePlayer, setProfilePlayer] = useState(null);
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
 
   const jumpToTournament = useCallback(t => {
     setTour(t.tour);
@@ -120,6 +122,19 @@ export default function App() {
   const prevMonth = () => { setNavDir('right'); setCurrentDate(d => d.subtract(1, 'month')); };
   const nextMonth = () => { setNavDir('left'); setCurrentDate(d => d.add(1, 'month')); };
   const goToToday = () => { setNavDir('fade'); setCurrentDate(dayjs()); };
+  const jumpToMonthYear = (year, month) => {
+    setNavDir('fade');
+    setCurrentDate(dayjs(new Date(year, month, 1)));
+    setShowMonthPicker(false);
+  };
+
+  // Years selectable in the month/year picker — the seasons present in the data
+  // (plus the current view's year, so it's always represented).
+  const pickerYears = (() => {
+    const set = new Set([...data.tournaments.atp, ...data.tournaments.wta].map(t => Number(t.start.slice(0, 4))));
+    set.add(currentDate.year());
+    return [...set].sort((a, b) => a - b);
+  })();
 
   // Tab title + favicon follow the active tour
   useEffect(() => {
@@ -204,12 +219,16 @@ export default function App() {
               ‹
             </button>
           )}
-          <span
+          <button
+            onClick={() => setShowMonthPicker(true)}
+            title="Jump to month"
             className="text-base w-32 sm:text-xl sm:w-44 font-semibold text-center select-none"
-            style={{ color: 'white', letterSpacing: '0.5px' }}
+            style={{ color: 'white', letterSpacing: '0.5px', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#c4b5fd')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'white')}
           >
             {monthLabel}
-          </span>
+          </button>
           <button
             onClick={nextMonth}
             className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-150"
@@ -430,6 +449,16 @@ export default function App() {
           tour={tour}
           monthLabel={currentDate.format('MMMM YYYY')}
           onClose={() => setProfilePlayer(null)}
+        />
+      )}
+
+      {showMonthPicker && (
+        <MonthYearPicker
+          currentDate={currentDate}
+          years={pickerYears}
+          tour={tour}
+          onSelect={jumpToMonthYear}
+          onClose={() => setShowMonthPicker(false)}
         />
       )}
 
