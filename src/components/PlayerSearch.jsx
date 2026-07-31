@@ -7,7 +7,7 @@ const deburr = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCa
 // Searches the current tour's Player Stats (YTD) leaderboard by name.
 // Selecting a result opens that player's profile. `players` is the ranked
 // stats array from buildPlayerStats — the same set the Player Stats dialog shows.
-export default function PlayerSearch({ players, tour, onSelect }) {
+export default function PlayerSearch({ players, onSelect }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
@@ -23,16 +23,14 @@ export default function PlayerSearch({ players, tour, onSelect }) {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const isAtp = tour === 'atp';
-  const accent = isAtp ? '#60b0ff' : '#f472b6';
-
   const nq = deburr(query.trim());
   // Match on the full name ("Carlos Alcaraz") or the abbreviated form
   // ("C. Alcaraz"), so first name, last name, and initial all work. fullName
   // comes from the data (winner_full / runner_up_full), falling back to the
-  // abbreviated name. Keep leaderboard order so the best players surface first.
+  // abbreviated name. Listed alphabetically by first name.
   const results = nq.length < 1 ? [] : (players ?? [])
     .filter(p => deburr(p.fullName).includes(nq) || deburr(p.name).includes(nq))
+    .sort((a, b) => deburr(a.fullName).localeCompare(deburr(b.fullName)))
     .slice(0, 8);
 
   const select = p => {
@@ -111,14 +109,6 @@ export default function PlayerSearch({ players, tour, onSelect }) {
                   background: i === activeIdx ? 'rgba(255,255,255,0.06)' : 'transparent',
                 }}
               >
-                <span
-                  style={{
-                    fontSize: '11px', fontWeight: '800', color: accent,
-                    width: '26px', textAlign: 'right', flexShrink: 0,
-                  }}
-                >
-                  {p.rank}
-                </span>
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontSize: '12px', fontWeight: '600', color: '#e5e7eb', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {p.country && <span style={{ marginRight: '5px' }}>{countryFlag(p.country)}</span>}

@@ -342,7 +342,7 @@ export default function App() {
         <TournamentSearch allData={data.tournaments} onJump={jumpToTournament} />
 
         {/* Search Player Stats (YTD) → open profile */}
-        <PlayerSearch players={ytdPlayers} tour={tour} onSelect={setProfilePlayer} />
+        <PlayerSearch players={ytdPlayers} onSelect={setProfilePlayer} />
 
         {/* Champions Wall */}
         <button
