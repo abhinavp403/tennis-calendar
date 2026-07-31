@@ -33,6 +33,26 @@ async function wikiSearch(query) {
 }
 
 /**
+ * Does `full` ("Daniel Mérida") actually belong to `abbrev` ("D. Mérida")?
+ * Requires the first initial and the surname to line up. This is the guard that
+ * keeps a wrong-page scrape (e.g. a Challenger event's finalists) from ever
+ * being stored against the wrong player.
+ */
+export function fullNameMatches(abbrev, full) {
+  const m = (abbrev ?? '').match(/^([A-Za-z])\.\s*(.+)$/);
+  if (!m || !full) return false;
+  const words = full.trim().split(/\s+/);
+  if (words.length < 2) return false;
+  if (deburr(words[0])[0] !== deburr(m[1])) return false;
+  const last = deburr(m[2]);
+  const rest = deburr(words.slice(1).join(' '));
+  const lastTok = deburr(m[2].split(' ').pop());
+  // Full surname match, or last-token match (handles middle names, e.g.
+  // "T. Etcheverry" vs "Tomás Martín Etcheverry").
+  return rest === last || deburr(words[words.length - 1]) === lastTok;
+}
+
+/**
  * Resolve an abbreviated "F. Last Name" to a full "First Last Name" via the
  * player's Wikipedia article, or null if no confident match is found.
  */
@@ -63,6 +83,22 @@ async function main() {
   const { 'tournaments.json': data } = await fetchGistFiles(['tournaments.json']);
   const today = new Date().toISOString().slice(0, 10);
 
+  // Drop any stored full name that doesn't belong to its abbreviated name, so a
+  // bad value gets re-resolved rather than trusted forever.
+  let purged = 0;
+  for (const tour of ['atp', 'wta']) {
+    for (const t of data[tour]) {
+      if (t.winner_full && !fullNameMatches(t.winner, t.winner_full)) {
+        console.log(`  ⚠ Dropping bad full name: ${t.name} winner ${t.winner} → "${t.winner_full}"`);
+        delete t.winner_full; purged++;
+      }
+      if (t.runner_up_full && !fullNameMatches(t.runner_up, t.runner_up_full)) {
+        console.log(`  ⚠ Dropping bad full name: ${t.name} runner-up ${t.runner_up} → "${t.runner_up_full}"`);
+        delete t.runner_up_full; purged++;
+      }
+    }
+  }
+
   // Which abbreviated names still lack a resolved full name anywhere?
   const known = new Set();   // names already resolved (have a *_full somewhere)
   const needed = new Set();
@@ -78,13 +114,24 @@ async function main() {
   const toResolve = [...needed].filter(n => !known.has(n)).sort();
   console.log(`${toResolve.length} players to resolve (of ${needed.size} total).`);
 
+  // Seed with the valid full names already in the data, so a name known from one
+  // tournament fills every other slot for that player (including purged ones).
   const fullByName = {};
+  for (const tour of ['atp', 'wta']) {
+    for (const t of data[tour]) {
+      if (t.winner_full) fullByName[t.winner] = t.winner_full;
+      if (t.runner_up_full) fullByName[t.runner_up] = t.runner_up_full;
+    }
+  }
   for (const name of toResolve) {
     try {
       const full = await resolveFullName(name);
-      if (full && full !== name) {
+      // Never store a name that doesn't belong to this player.
+      if (full && full !== name && fullNameMatches(name, full)) {
         fullByName[name] = full;
         console.log(`  ✓ ${name} → ${full}`);
+      } else if (full && full !== name) {
+        console.log(`  ✗ ${name} → rejected "${full}" (doesn't match initial/surname)`);
       } else {
         console.log(`  ✗ ${name} → (unresolved)`);
       }
@@ -104,8 +151,8 @@ async function main() {
     }
   }
 
-  console.log(`\nResolved ${Object.keys(fullByName).length} names, applied to ${applied} tournament slots.`);
-  if (applied > 0) {
+  console.log(`\nPurged ${purged} bad full names; resolved ${Object.keys(fullByName).length}, applied to ${applied} tournament slots.`);
+  if (applied > 0 || purged > 0) {
     await updateGistContent({ 'tournaments.json': JSON.stringify(data, null, 2) + '\n' });
   } else {
     console.log('Nothing to update.');

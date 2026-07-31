@@ -41,7 +41,8 @@ const WIKI_NAME_MAP = {
   'italian open': "Internazionali BNL d'Italia",
   'internazionali bnl': "Internazionali BNL d'Italia",
   'madrid open': 'Mutua Madrid Open',
-  'canadian open': 'Canadian Open',
+  'canadian open': 'National Bank Open',
+  'washington open': 'Mubadala Citi DC Open',
   'cincinnat': 'Cincinnati Open',
   'paris masters': 'Paris Masters',
   'shanghai masters': 'Shanghai Masters',
@@ -87,7 +88,7 @@ async function searchWikipedia(query) {
 }
 
 async function getWikitext(title) {
-  const data = await wikiApiGet({ action: 'query', titles: title, prop: 'revisions', rvprop: 'content', rvslots: 'main' });
+  const data = await wikiApiGet({ action: 'query', titles: title, prop: 'revisions', rvprop: 'content', rvslots: 'main', redirects: '1' });
   const page = Object.values(data.query?.pages ?? {})[0];
   return page?.revisions?.[0]?.slots?.main?.['*'] ?? '';
 }
@@ -119,6 +120,12 @@ function parseDateField(dateStr, year) {
   if (!endDay) {
     m = dateStr.match(new RegExp(`\\d+\\s+(?:${MONTH_PATTERN})\\s*[–\\-]\\s*(\\d+)\\s+(${MONTH_PATTERN})`, 'i'));
     if (m) { endDay = m[1]; endMonth = MONTHS[m[2].toLowerCase()]; }
+  }
+
+  // "August 1 – August 13" or "July 27 – August 2" (month named on both sides)
+  if (!endDay) {
+    m = dateStr.match(new RegExp(`(?:${MONTH_PATTERN})\\s+\\d+\\s*[–\\-]\\s*(${MONTH_PATTERN})\\s+(\\d+)`, 'i'));
+    if (m) { endMonth = MONTHS[m[1].toLowerCase()]; endDay = m[2]; }
   }
 
   if (!endDay || !endMonth) return null;
