@@ -1,21 +1,25 @@
-name: Weekly Data Update
+name: Daily Data Update
 
-# Fetches tournament results and rankings from Wikipedia, then pushes
-# updated tournaments.json / rankings.json to both the Gist (which the
-# app reads at launch) and back to this repo (which keeps tennis_calendar.ics
-# in sync via the update-ics workflow).
+# Fetches tournament results and rankings from Wikipedia, resolves players'
+# full first names, then pushes updated tournaments.json to the Gist that the
+# app reads at launch.
+#
+# Runs twice a day. fetchResults only picks up a tournament once its end date
+# has passed in UTC, so the 01:00 run is what catches the previous day's finals
+# (most finals are Sun) within hours; 09:00 is the catch-up pass for anything
+# Wikipedia hadn't published yet.
 
 on:
   schedule:
-    # Daily at 09:00 UTC — Wikipedia usually has weekend results by then.
+    - cron: "0 1 * * *"
     - cron: "0 9 * * *"
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: weekly-data-update
+  group: daily-data-update
   cancel-in-progress: false
 
 jobs:
@@ -52,19 +56,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GIST_TOKEN }}
 
+      - name: Resolve players' full first names
+        run: node scripts/enrichPlayerNames.js
+        env:
+          GH_TOKEN: ${{ secrets.GIST_TOKEN }}
+
       - name: Fetch missing rankings
         run: node scripts/fetchRankings.js
         env:
           GH_TOKEN: ${{ secrets.GIST_TOKEN }}
-
-      - name: Commit updated data back to repo
-        run: |
-          if git diff --quiet -- data/; then
-            echo "No changes to data files"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/
-          git commit -m "Auto-update tournament data and rankings"
-          git push

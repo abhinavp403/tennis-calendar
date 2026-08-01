@@ -39,9 +39,13 @@ The data-maintenance scripts (`fetchResults.js`, `fetchRankings.js`, `fixDates.j
 
 `electron/preload.cjs` is the only IPC surface. It exposes `getTournaments`, `getRankings`, `getSyncTime` (all `sendSync`), and `triggerSync` (async). The renderer never writes; it only reads via `window.electronAPI`. Adding new data access means: edit the preload, add a handler in `main.js`, then consume in React.
 
-### Weekly automation
+### Scheduled data updates
 
-`scripts/weeklyUpdate.sh` runs `fixDates.js`, `fetchResults.js`, `fetchRankings.js` in sequence and is wired to launchd locally (not CI). Each reads the current Gist and pushes its changes back — no git commit needed. Because they run sequentially and both `fixDates` and `fetchResults` touch `tournaments.json`, reads go through the GitHub API (read-your-writes) so the second step sees the first's push. (`fixDates` used to only write the shared local file; now it pushes to the Gist itself.)
+**`.github/workflows/daily-data-update.yml` is the live automation** — it runs `fixDates.js`, `fetchResults.js`, `enrichPlayerNames.js`, `fetchRankings.js` in that order, twice daily (01:00 and 09:00 UTC), authenticating with the `GIST_TOKEN` secret. `fetchResults` only picks up a tournament once its end date has passed **in UTC**, so the 01:00 run is what catches the previous day's finals; 09:00 is the catch-up pass.
+
+Each script reads the current data and pushes its changes to the Gist — no git commit needed. Because they run sequentially and several touch `tournaments.json`, reads go through the GitHub API (read-your-writes) so each step sees the previous one's push.
+
+`scripts/weeklyUpdate.sh` runs the same sequence and is kept for **manual local runs only**. It used to be wired to a launchd agent, which was removed — it had been failing with "Operation not permitted" because macOS TCC blocks launchd-spawned processes from reading `~/Documents`. Don't re-add a local scheduler; use the workflow.
 
 ## Data shapes
 
