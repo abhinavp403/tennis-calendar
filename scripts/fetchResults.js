@@ -22,7 +22,9 @@ const WIKI_NAME_MAP = {
   'roland garros': 'French Open',
   'italian open': "Internazionali BNL d'Italia",
   'madrid open': 'Mutua Madrid Open',
-  'canadian open': 'Canadian Open',
+  'canadian open': 'National Bank Open',
+  'washington open': 'Mubadala Citi DC Open',
+  'croatia open': 'Croatia Open Umag',
   'cincinnat': 'Cincinnati Open',
   'paris masters': 'Paris Masters',
   'shanghai masters': 'Shanghai Masters',
@@ -204,10 +206,19 @@ async function fetchResultForTournament(tournament, tour) {
     }
   }
 
-  // Fall back to search, but validate candidate title contains tournament name keywords
-  // to prevent false matches (e.g. Italian Open page returned for Geneva Open query)
-  const nameKeywords = tournament.name.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-  const titleMatches = r => nameKeywords.some(k => r.title.toLowerCase().includes(k));
+  // Fall back to search, but validate the candidate title against the tournament's
+  // *distinctive* words. Generic tennis words must not be able to validate a match
+  // on their own — "open" alone once matched "2026 Zagreb Open – Men's singles" for
+  // the Croatia Open and wrote a Challenger final into the ATP 250 event.
+  const GENERIC_WORDS = new Set([
+    'open', 'tennis', 'championships', 'championship', 'international', 'classic',
+    'masters', 'cup', 'tour', 'grand', 'prix', 'trophy', 'series',
+  ]);
+  const nameKeywords = tournament.name.toLowerCase().split(/\s+/)
+    .filter(w => w.length > 3 && !GENERIC_WORDS.has(w));
+  // No distinctive word left (e.g. name is literally "Open") — refuse to guess.
+  const titleMatches = r =>
+    nameKeywords.length > 0 && nameKeywords.some(k => r.title.toLowerCase().includes(k));
 
   const searchQueries = [
     `${year} ${wikiName} ${singlesLabel}`,
