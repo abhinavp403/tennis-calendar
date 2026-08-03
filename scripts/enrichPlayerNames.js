@@ -81,7 +81,6 @@ async function resolveFullName(abbrev) {
 
 async function main() {
   const { 'tournaments.json': data } = await fetchGistFiles(['tournaments.json']);
-  const today = new Date().toISOString().slice(0, 10);
 
   // Drop any stored full name that doesn't belong to its abbreviated name, so a
   // bad value gets re-resolved rather than trusted forever.
@@ -104,7 +103,7 @@ async function main() {
   const needed = new Set();
   for (const tour of ['atp', 'wta']) {
     for (const t of data[tour]) {
-      if (!t.winner || t.end >= today) continue;
+      if (!t.winner) continue;
       if (t.winner_full) known.add(t.winner);
       if (t.runner_up_full) known.add(t.runner_up);
       needed.add(t.winner);
@@ -145,7 +144,7 @@ async function main() {
   let applied = 0;
   for (const tour of ['atp', 'wta']) {
     for (const t of data[tour]) {
-      if (!t.winner || t.end >= today) continue;
+      if (!t.winner) continue;
       if (!t.winner_full && fullByName[t.winner]) { t.winner_full = fullByName[t.winner]; applied++; }
       if (t.runner_up && !t.runner_up_full && fullByName[t.runner_up]) { t.runner_up_full = fullByName[t.runner_up]; applied++; }
     }

@@ -21,6 +21,12 @@ const UA = 'TennisCalendar/1.0 (https://github.com/abhinavp403/tennis-calendar; 
 // Only check tournaments ending within this many days from today
 const LOOKAHEAD_DAYS = 14;
 
+// Also re-check tournaments that have *just* ended. A rain delay pushes the
+// final past the scheduled end date (e.g. the 2026 DC Open finals slipped from
+// Sun 2 Aug to Mon 3 Aug), and without this the stored date is already in the
+// past by the time Wikipedia is updated, so it could never be corrected.
+const LOOKBACK_DAYS = 3;
+
 // Delay between Wikipedia API calls to avoid rate limiting (ms)
 const REQUEST_DELAY = 600;
 
@@ -219,15 +225,20 @@ export async function fixTournamentDates(dataPath = DATA_PATH) {
   const cutoff = new Date(today);
   cutoff.setDate(cutoff.getDate() + LOOKAHEAD_DAYS);
   const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const lookback = new Date(today);
+  lookback.setDate(lookback.getDate() - LOOKBACK_DAYS);
+  const lookbackStr = lookback.toISOString().slice(0, 10);
 
-  console.log(`Checking tournaments active between ${todayStr} and ${cutoffStr}...\n`);
+  console.log(`Checking tournaments ending between ${lookbackStr} and ${cutoffStr}...\n`);
 
   let updated = false;
 
   for (const tour of ['atp', 'wta']) {
     for (const tournament of data[tour]) {
-      // Skip past tournaments and those ending too far in the future
-      if (tournament.end < todayStr || tournament.end > cutoffStr) continue;
+      // Skip long-past tournaments and those ending too far in the future. The
+      // lookback keeps just-finished events in scope so a rain-delayed finish
+      // still gets corrected.
+      if (tournament.end < lookbackStr || tournament.end > cutoffStr) continue;
 
       console.log(`Checking: ${tour.toUpperCase()} ${tournament.name} (current end: ${tournament.end})`);
       try {

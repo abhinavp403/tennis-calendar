@@ -79,7 +79,9 @@ async function getWikitext(title) {
   const url =
     'https://en.wikipedia.org/w/api.php?action=query&titles=' +
     encodeURIComponent(title) +
-    '&prop=revisions&rvprop=content&format=json&rvslots=main';
+    // redirects=1 so a mapped name that is a redirect (e.g. "Mubadala Citi DC
+    // Open" → "Mubadala DC Open") resolves instead of returning nothing.
+    '&prop=revisions&rvprop=content&format=json&rvslots=main&redirects=1';
   const res = await fetch(url, { headers: { 'User-Agent': UA } });
   const data = await res.json();
   const page = Object.values(data.query?.pages ?? {})[0];
