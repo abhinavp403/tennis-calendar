@@ -56,8 +56,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GIST_TOKEN }}
 
-      - name: Resolve players' full first names
-        run: node scripts/enrichPlayerNames.js
+      - name: Resolve players' full names and countries
+        run: node scripts/enrichPlayers.js
         env:
           GH_TOKEN: ${{ secrets.GIST_TOKEN }}
 

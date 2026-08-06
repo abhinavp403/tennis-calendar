@@ -17,8 +17,8 @@ $NODE scripts/fixDates.js >> "$LOG" 2>&1
 # Fetch missing results (also pushes to Gist if updated)
 $NODE scripts/fetchResults.js >> "$LOG" 2>&1
 
-# Resolve full first names for any new finalists (from their Wikipedia articles)
-$NODE scripts/enrichPlayerNames.js >> "$LOG" 2>&1
+# Resolve full names + country codes for any new finalists (from Wikipedia)
+$NODE scripts/enrichPlayers.js >> "$LOG" 2>&1
 
 # Fetch missing rankings (also pushes to Gist if updated)
 $NODE scripts/fetchRankings.js >> "$LOG" 2>&1
