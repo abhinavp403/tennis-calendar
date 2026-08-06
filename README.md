@@ -12,11 +12,15 @@ A desktop app built with **Electron + React + Vite** that displays the full 2026
 - 🏆 **Tournament final-day markers** — each tournament appears on its final day with a logo/badge
 - 🎾 **Grand Slam highlighting** — Grand Slams appear in distinct violet/purple with finals results (winner, runner-up, score)
 - 🔍 **Search** — jump to any tournament, or find a player by first *or* last name and open their profile
+- 🗓️ **Jump to any month** — click the month title for a slot-machine month/year picker
+- 🎾 **Surface filter** — show only hard, indoor, clay, or grass events
 - 🛈 **Hover tooltips** — hover over any tournament to see name, location, surface, and level
 - ✅ **Match results on hover** — completed tournaments show the winner, runner-up, and final score
 - 📋 **Month summary dialog** — a "Results" button opens a summary of all completed tournaments for that month
 - 📈 **Player Stats (YTD)** — a season-long leaderboard ranked by *level-weighted points* (a Grand Slam counts far more than a stack of 250s), showing each player's titles, runner-ups, total finals, and points; click a name for a full profile (win %, best surface, per-surface breakdown)
-- 📊 **Monthly rankings** — a "Rankings" button shows the top 20 ATP/WTA players at end of each completed month, with points and ▲▼ movement indicators vs. the previous month
+- 🏳️ **Country flags** — players are shown with their national flag across stats, search, rankings, and profiles
+- 🏆 **Champions wall** — every title winner of the season at a glance
+- 📊 **Rankings** — a "Rankings" button shows the top 20 ATP/WTA players for the displayed month, with points, ▲▼ movement vs. the previous snapshot, and a "race to #1" chart. Snapshots are captured roughly every two weeks
 - 🔵🩷 **ATP / WTA toggle** — switch between the men's and women's tour instantly
 - 🎨 **Vibrant dark theme** — colour-coded by tournament level (Grand Slam / 1500 / 1000 / 500 / 250) with glows and gradients
 
@@ -109,8 +113,6 @@ Pre-built installers can be generated via GitHub Actions (triggered manually fro
 
 Prefer to view the schedule inside your own calendar app instead of running the desktop app? Subscribe to the live `.ics` feed — results fill in automatically as tournaments complete throughout the season.
 
-**Subscribe by URL (recommended — auto-updates with results):**
-
 ```
 https://raw.githubusercontent.com/abhinavp403/tennis-calendar/main/tennis_calendar.ics
 ```
@@ -119,7 +121,7 @@ https://raw.githubusercontent.com/abhinavp403/tennis-calendar/main/tennis_calend
 - **Apple Calendar**: File → New Calendar Subscription → paste the link above
 - **Outlook**: Add calendar → From internet → paste the link above
 
-The file is regenerated daily by a GitHub Actions workflow. When a tournament finishes, results (winner, runner-up, score) appear in the event description within ~24 hours.
+The feed is regenerated straight after each data update (twice daily), so when a tournament finishes, the winner, runner-up, and score appear in the event description within hours.
 
 **One-time download (static snapshot):**
 
@@ -148,8 +150,12 @@ Tournament data is stored in a [GitHub Gist](https://gist.github.com/abhinavp403
   "logo": "atp_miami_open.png",
   "winner": "J. Sinner",
   "runner_up": "J. Lehečka",
+  "winner_full": "Jannik Sinner",
+  "runner_up_full": "Jiří Lehečka",
   "score": "6–4, 6–4"
 }
 ```
 
-Results (`winner`, `runner_up`, `score`) are populated for all completed tournaments sourced from Wikipedia. A daily GitHub Actions workflow scrapes new results and pushes updates to the Gist automatically.
+Results (`winner`, `runner_up`, `score`) are sourced from Wikipedia once a tournament finishes. The `_full` names power first-name search, and a companion `players.json` maps each player to their country code for the flags.
+
+Everything is maintained by a GitHub Actions workflow that runs **twice daily** (01:00 and 09:00 UTC) and pushes straight to the Gist — no app rebuild needed. It verifies tournament dates against Wikipedia (so a rain-delayed final gets corrected), fetches new results, and resolves each new finalist's full name and country from their own Wikipedia article.

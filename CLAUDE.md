@@ -65,11 +65,11 @@ Both the full names and the countries are populated by **`scripts/enrichPlayers.
 
 ## ICS calendar export
 
-`scripts/export_ics.py` (Python 3) generates `tennis_calendar.ics` from `data/tournaments.json` — one all-day event per tournament on its final day, titled `[Tour - Level] Name`. The `.gitattributes` rule `*.ics text eol=crlf` preserves CRLF line endings (required by RFC 5545).
+`scripts/export_ics.py` (Python 3) generates `tennis_calendar.ics` **from the Gist** (falling back to a local `data/tournaments.json` only if the fetch fails) — one all-day event per tournament on its final day, titled `[Tour - Level] Name`. The `.gitattributes` rule `*.ics text eol=crlf` preserves CRLF line endings (required by RFC 5545).
 
-`.github/workflows/update-ics.yml` regenerates and commits the .ics whenever `data/tournaments.json` or the script changes. The file is served via GitHub Pages at `https://abhinavp403.github.io/tennis-calendar/tennis_calendar.ics` for URL subscriptions.
+`.github/workflows/update-ics.yml` regenerates and commits the .ics, then serves it from the repo over `raw.githubusercontent.com` for URL subscriptions. It triggers on **`workflow_run` after "Daily Data Update" succeeds**, so the feed follows the data. It previously triggered on pushes to `data/tournaments.json`; that file was removed in `cf12e00`, so the workflow silently stopped firing and the feed sat frozen from May to August 2026.
 
-**Stale/broken:** this pipeline reads the committed `data/tournaments.json`, which no longer exists (removed in `cf12e00`). So `.github/workflows/update-ics.yml` can't regenerate the .ics, and the published `tennis_calendar.ics` is frozen at whatever was last committed. To revive it, point `export_ics.py` at the Gist (as the JS scripts now do) or trigger it from Gist content — it is NOT wired to the Gist today.
+Every run re-stamps `DTSTAMP` on every event, so the commit step diffs with `DTSTAMP:` lines stripped — otherwise it would commit twice a day with no real change.
 
 ## Distribution
 

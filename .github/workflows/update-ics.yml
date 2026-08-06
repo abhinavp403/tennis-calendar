@@ -1,11 +1,17 @@
 name: Update Calendar (.ics)
 
+# Regenerates tennis_calendar.ics (the subscribable feed) from the Gist and
+# commits it back to the repo, where GitHub serves it over raw.githubusercontent.
+#
+# Runs straight after the data workflow so the feed reflects results as soon as
+# they land. It used to trigger on pushes to data/tournaments.json, but that file
+# was removed when the app moved to Gist-only data, so it never fired again and
+# the feed sat frozen — export_ics.py reads the Gist directly, not the repo.
+
 on:
-  push:
-    branches: [main]
-    paths:
-      - data/tournaments.json
-      - scripts/export_ics.py
+  workflow_run:
+    workflows: ["Daily Data Update"]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -17,6 +23,10 @@ concurrency:
 
 jobs:
   regenerate:
+    # workflow_run fires even when the upstream run failed; only follow a success.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,12 +36,19 @@ jobs:
           python-version: "3.11"
 
       - name: Regenerate tennis_calendar.ics
-        run: python3 scripts/export_ics.py
-
-      - name: Commit if changed
         run: |
-          if git diff --quiet -- tennis_calendar.ics; then
-            echo "No changes to tennis_calendar.ics"
+          cp tennis_calendar.ics /tmp/before.ics 2>/dev/null || true
+          python3 scripts/export_ics.py
+
+      - name: Commit if the schedule or results actually changed
+        run: |
+          # Every run stamps a fresh DTSTAMP, so compare with those lines removed
+          # — otherwise this would commit twice a day with no real change.
+          if [ -f /tmp/before.ics ] && \
+             diff -q <(grep -v '^DTSTAMP:' /tmp/before.ics) \
+                     <(grep -v '^DTSTAMP:' tennis_calendar.ics) >/dev/null; then
+            echo "Only DTSTAMP changed — nothing to commit"
+            git checkout -- tennis_calendar.ics
             exit 0
           fi
           git config user.name "github-actions[bot]"
