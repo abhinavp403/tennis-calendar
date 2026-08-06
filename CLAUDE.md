@@ -67,7 +67,7 @@ Both the full names and the countries are populated by **`scripts/enrichPlayers.
 
 `scripts/export_ics.py` (Python 3) generates `tennis_calendar.ics` **from the Gist** (falling back to a local `data/tournaments.json` only if the fetch fails) — one all-day event per tournament on its final day, titled `[Tour - Level] Name`. The `.gitattributes` rule `*.ics text eol=crlf` preserves CRLF line endings (required by RFC 5545).
 
-`.github/workflows/update-ics.yml` regenerates and commits the .ics, then serves it from the repo over `raw.githubusercontent.com` for URL subscriptions. It triggers on **`workflow_run` after "Daily Data Update" succeeds**, so the feed follows the data. It previously triggered on pushes to `data/tournaments.json`; that file was removed in `cf12e00`, so the workflow silently stopped firing and the feed sat frozen from May to August 2026.
+`.github/workflows/update-ics.yml` regenerates and commits the .ics, then serves it from the repo over `raw.githubusercontent.com` for URL subscriptions. It runs on a **schedule at 01:30 and 09:30 UTC** — 30 minutes after each `daily-data-update` pass, which takes about a minute. It previously triggered on pushes to `data/tournaments.json`; that file was removed in `cf12e00`, so the workflow silently stopped firing and the feed sat frozen from May to August 2026. A `workflow_run` chain off "Daily Data Update" would express the dependency better but never fired in testing, so the schedule is deliberate — keep the 30-minute offset if you change the data workflow's times.
 
 Every run re-stamps `DTSTAMP` on every event, so the commit step diffs with `DTSTAMP:` lines stripped — otherwise it would commit twice a day with no real change.
 
