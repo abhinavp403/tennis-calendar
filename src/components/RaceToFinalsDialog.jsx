@@ -172,6 +172,15 @@ export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
                             </span>
                           )}
                         </div>
+                        {/* Events played and titles won, where the source table has them */}
+                        {player.tournaments != null && (
+                          <div style={{ fontSize: '10.5px', color: '#6b7280', fontWeight: '500' }}>
+                            {player.tournaments} event{player.tournaments === 1 ? '' : 's'}
+                            {player.titles > 0 && (
+                              <> · <span style={{ color: '#fbbf24' }}>{player.titles} title{player.titles === 1 ? '' : 's'}</span></>
+                            )}
+                          </div>
+                        )}
                         {/* Points bar, relative to the leader */}
                         <div style={{ height: '4px', borderRadius: '2px', background: '#1e1e30', marginRight: '8px' }}>
                           <div
