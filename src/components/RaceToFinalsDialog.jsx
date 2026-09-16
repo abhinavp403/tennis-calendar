@@ -1,16 +1,19 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import { countryFlag } from '../utils/flags.js';
+import PointsInfoDialog, { InfoButton } from './PointsInfoDialog.jsx';
 
 // Top 8 in the race qualify for the season-ending Finals.
 const CUTOFF = 8;
 
 export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
+  const [showInfo, setShowInfo] = useState(false);
   useEffect(() => {
-    const handler = e => { if (e.key === 'Escape') onClose(); };
+    // Escape closes the points explainer first, if open.
+    const handler = e => { if (e.key === 'Escape') (showInfo ? setShowInfo(false) : onClose()); };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [onClose]);
+  }, [onClose, showInfo]);
 
   const accentColor = tour === 'atp' ? '#3388ff' : '#e060aa';
   const players = race?.players ?? [];
@@ -57,6 +60,7 @@ export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
           <div>
             <div style={{ fontSize: '17px', fontWeight: '700', color: 'white' }}>
               🏁 Race to the Finals
+              <InfoButton onClick={() => setShowInfo(true)} />
             </div>
             <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
               {players.length > 0 ? `Top ${players.length} ` : ''}{tour.toUpperCase()} Singles
@@ -210,6 +214,7 @@ export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
           </>
         )}
       </div>
+      {showInfo && <PointsInfoDialog tour={tour} onClose={() => setShowInfo(false)} />}
     </div>
   );
 }

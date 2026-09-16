@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import PointsInfoDialog, { InfoButton } from './PointsInfoDialog.jsx';
 import { rankingKeyDate as keyDate, isDateKey } from '../utils/rankingKeys.js';
 import { countryFlag } from '../utils/flags.js';
 
@@ -121,11 +122,13 @@ function RaceSparkline({ allRankings, activeKey, rankings }) {
 }
 
 export default function RankingsDialog({ monthLabel, rankings, prevRankings, allRankings, activeKey, tour, onClose }) {
+  const [showInfo, setShowInfo] = useState(false);
   useEffect(() => {
-    const handler = e => { if (e.key === 'Escape') onClose(); };
+    // Escape closes the points explainer first, if open.
+    const handler = e => { if (e.key === 'Escape') (showInfo ? setShowInfo(false) : onClose()); };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [onClose]);
+  }, [onClose, showInfo]);
 
   const accentColor = tour === 'atp' ? '#0066cc' : '#be398d';
 
@@ -172,6 +175,7 @@ export default function RankingsDialog({ monthLabel, rankings, prevRankings, all
           <div>
             <div style={{ fontSize: '17px', fontWeight: '700', color: 'white' }}>
               {monthLabel} — Rankings
+              <InfoButton onClick={() => setShowInfo(true)} />
             </div>
             <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
               Top {rankings.length} {tour.toUpperCase()} Singles
@@ -322,6 +326,7 @@ export default function RankingsDialog({ monthLabel, rankings, prevRankings, all
           })}
         </div>
       </div>
+      {showInfo && <PointsInfoDialog tour={tour} onClose={() => setShowInfo(false)} />}
     </div>
   );
 }
