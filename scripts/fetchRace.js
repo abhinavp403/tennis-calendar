@@ -38,6 +38,60 @@ function abbreviateName(fullName) {
   return parts.length < 2 ? fullName : `${parts[0][0]}. ${parts.slice(1).join(' ')}`;
 }
 
+// Strips a wikitable cell's leading marker and optional attribute block:
+// `| bgcolor="yellow" | content` / `!colspan=4|Grand Slam` → content.
+// Attributes never contain `[`, `{` or `<`, which keeps link pipes intact.
+const cellContent = line => line.replace(/^[|!]\s*(?:[^|[{<]*\|(?!\|))?\s*/, '');
+
+/**
+ * The top header row groups the per-event columns, e.g. ATP:
+ * `colspan="4" | Grand Slam`, `colspan="8" | ATP Masters 1000`,
+ * `colspan="6" | Best other`. Returns one group key per result column
+ * ('slam' | 'masters' | 'other'), or null if a group isn't recognised.
+ */
+function columnGroups(header) {
+  const groups = [];
+  for (const line of header.split('\n')) {
+    const span = line.match(/^!.*?colspan="?(\d+)"?/);
+    if (!span) continue;
+    const label = cellContent(line);
+    const key = /grand slam/i.test(label) ? 'slam'
+      : /1000/.test(label) ? 'masters'
+      : /other/i.test(label) ? 'other'
+      : null;
+    if (!key) return null;
+    groups.push(...Array(parseInt(span[1], 10)).fill(key));
+  }
+  return groups.length ? groups : null;
+}
+
+/**
+ * One per-event cell → { event, round, points } or null when empty (event
+ * not played yet). Shapes seen:
+ *   <!--Australian Open--> [[2026 Australian Open – Men's singles|SF]]<br/>800
+ *   '''[[2026 Porsche Tennis Grand Prix – Singles|W]]'''<br/>500
+ *   <!--US Open--> A<br/>0          (absent from a mandatory event)
+ */
+function parseResultCell(content) {
+  // Column comments name the event ("Rome"), but some are just slot numbers.
+  const comment = content.match(/<!--+\s*(.*?)\s*-*-->/)?.[1];
+  const commentName = comment && !/^\d+$|only/i.test(comment) ? comment : null;
+  const body = content.replace(/<!--.*?-->/g, '').trim();
+  if (!body) return null;
+
+  const link = body.match(/\[\[([^\]|]+)\|([^\]]+)\]\]/);
+  const points = body.match(/<br\s*\/?>\s*'*([\d,]+)/)?.[1];
+  const round = (link ? link[2] : body.split(/<br/i)[0]).replace(/'/g, '').trim();
+  if (!round || points == null) return null;
+
+  // "2026 Mutua Madrid Open – Men's singles" → "Mutua Madrid Open"
+  const event = link
+    ? link[1].replace(/^\d{4}\s+/, '').replace(/\s+–\s+.*$/, '').trim()
+    : commentName;
+  if (!event) return null;
+  return { event, round, points: parseInt(points.replace(/,/g, ''), 10) };
+}
+
 /**
  * The singles race table is the first wikitable whose header has a "Total"
  * points column and a "Titles" column (the doubles table comes later).
@@ -57,8 +111,11 @@ export function parseRace(wikitext) {
     ? `${last[1]}-${last[2].padStart(2, '0')}-${last[3].padStart(2, '0')}`
     : null;
 
+  const [header, ...rows] = table.split(/\n\|-[^\n]*\n/);
+  const groups = columnGroups(header);
+
   const players = [];
-  for (const row of table.split(/\n\|-[^\n]*\n/).slice(1)) {
+  for (const row of rows) {
     const lines = row.split('\n').map(l => l.trim()).filter(Boolean);
     // Rank cell: "|2", "| 3", "| bgcolor=gold | 1<sup>†</sup>"
     const rankLine = lines[0]?.replace(/^\|\s*(?:[^|]*\|\s*)?/, '');
@@ -79,6 +136,20 @@ export function parseRace(wikitext) {
     if (trailing.length < 3 || trailing.some(Number.isNaN)) continue;
     const [points, tournaments, titles] = trailing.slice(-3);
 
+    // Per-event cells sit between the player cell and the trailing totals.
+    // Only trust them if the count matches the header's columns — otherwise
+    // results would land under the wrong group. Totals are kept either way.
+    const cells = lines.slice(2).filter(l => l.startsWith('|'));
+    let results;
+    if (groups && cells.length === groups.length) {
+      results = cells
+        .map((c, i) => {
+          const r = parseResultCell(cellContent(c));
+          return r && { ...r, group: groups[i] };
+        })
+        .filter(Boolean);
+    }
+
     players.push({
       rank,
       name: abbreviateName(full),
@@ -88,6 +159,7 @@ export function parseRace(wikitext) {
       tournaments,
       titles,
       qualified: /†/.test(lines[0]),
+      ...(results && { results }),
     });
     if (players.length >= TOP_N) break;
   }

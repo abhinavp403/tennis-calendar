@@ -6,8 +6,77 @@ import PointsInfoDialog, { InfoButton } from './PointsInfoDialog.jsx';
 // Top 8 in the race qualify for the season-ending Finals.
 const CUTOFF = 8;
 
+const GROUPS = [
+  { key: 'slam', label: () => 'Grand Slams' },
+  { key: 'masters', label: tour => (tour === 'atp' ? 'Masters 1000' : 'WTA 1000') },
+  { key: 'other', label: () => 'Best other results' },
+];
+
+const ROUND_COLORS = { W: '#fbbf24', F: '#e5e7eb', SF: '#c4c4d4', QF: '#9ca3af' };
+
+// Where a player's race points came from, one line per event, in the
+// Wikipedia table's order. "A" = skipped a mandatory event (counts as 0).
+function Breakdown({ results, tour }) {
+  return (
+    <div
+      style={{
+        margin: '0 0 8px 36px', padding: '8px 12px',
+        background: 'rgba(255,255,255,0.025)', border: '1px solid #1e1e30', borderRadius: '8px',
+      }}
+    >
+      {GROUPS.map(({ key, label }) => {
+        const rows = results.filter(r => r.group === key);
+        if (rows.length === 0) return null;
+        const subtotal = rows.reduce((s, r) => s + r.points, 0);
+        return (
+          <div key={key} style={{ padding: '4px 0' }}>
+            <div
+              style={{
+                display: 'flex', justifyContent: 'space-between',
+                fontSize: '9.5px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', marginBottom: '2px',
+              }}
+            >
+              <span>{label(tour).toUpperCase()}</span>
+              <span style={{ fontFamily: 'monospace' }}>{subtotal.toLocaleString()}</span>
+            </div>
+            {rows.map((r, i) => {
+              const absent = r.round === 'A';
+              return (
+                <div
+                  key={i}
+                  style={{
+                    display: 'grid', gridTemplateColumns: '1fr 52px 48px', alignItems: 'center',
+                    fontSize: '11.5px', padding: '2px 0', opacity: absent ? 0.45 : 1,
+                  }}
+                >
+                  <span style={{ color: '#c4c4d4', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {r.event}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '10px', fontWeight: '700', textAlign: 'center',
+                      color: ROUND_COLORS[r.round] ?? '#6b7280',
+                    }}
+                  >
+                    {absent ? 'Skipped' : r.round === 'W' ? '🏆 W' : r.round}
+                  </span>
+                  <span style={{ fontFamily: 'monospace', textAlign: 'right', color: r.round === 'W' ? '#fbbf24' : '#9ca3af' }}>
+                    {r.points.toLocaleString()}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
   const [showInfo, setShowInfo] = useState(false);
+  // Name of the player whose breakdown is open (one at a time).
+  const [expanded, setExpanded] = useState(null);
   useEffect(() => {
     // Escape closes the points explainer first, if open.
     const handler = e => { if (e.key === 'Escape') (showInfo ? setShowInfo(false) : onClose()); };
@@ -41,7 +110,7 @@ export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
           border: '1px solid #2a2a3a',
           borderRadius: '12px',
           width: '100%',
-          maxWidth: '520px',
+          maxWidth: '640px',
           maxHeight: '85vh',
           display: 'flex',
           flexDirection: 'column',
@@ -124,16 +193,21 @@ export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
                 let gap = null;
                 if (inside && firstOutPts != null) gap = { text: `+${(player.points - firstOutPts).toLocaleString()}`, color: '#34d399' };
                 if (!inside && cutoffPts != null) gap = { text: `−${(cutoffPts - player.points).toLocaleString()}`, color: '#f87171' };
+                const canExpand = player.results?.length > 0;
+                const isOpen = canExpand && expanded === player.name;
 
                 return (
                   <div key={player.rank}>
                     <div
+                      onClick={canExpand ? () => setExpanded(isOpen ? null : player.name) : undefined}
+                      title={canExpand ? (isOpen ? 'Hide breakdown' : 'Show where the points came from') : undefined}
                       style={{
                         display: 'grid',
                         gridTemplateColumns: '36px 1fr 64px 74px',
                         alignItems: 'center',
                         padding: '8px 0 6px',
-                        opacity: inside ? 1 : 0.6,
+                        opacity: inside || isOpen ? 1 : 0.6,
+                        cursor: canExpand ? 'pointer' : 'default',
                       }}
                     >
                       <span style={{ fontSize: '13px', fontWeight: '800', color: inside ? accentColor : '#9ca3af' }}>
@@ -179,6 +253,11 @@ export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
                             {player.titles > 0 && (
                               <> · <span style={{ color: '#fbbf24' }}>{player.titles} title{player.titles === 1 ? '' : 's'}</span></>
                             )}
+                            {canExpand && (
+                              <span style={{ color: isOpen ? accentColor : '#4b5580', fontWeight: '600' }}>
+                                {' · '}breakdown {isOpen ? '▴' : '▾'}
+                              </span>
+                            )}
                           </div>
                         )}
                         {/* Points bar, relative to the leader */}
@@ -200,6 +279,8 @@ export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
                         {gap?.text}
                       </span>
                     </div>
+
+                    {isOpen && <Breakdown results={player.results} tour={tour} />}
 
                     {/* Qualification cutoff line after #8 */}
                     {player.rank === CUTOFF && (

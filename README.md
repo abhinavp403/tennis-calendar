@@ -20,8 +20,9 @@ A desktop app built with **Electron + React + Vite** that displays the full 2026
 - 📈 **Player Stats (YTD)** — a season-long leaderboard ranked by *level-weighted points* (a Grand Slam counts far more than a stack of 250s), showing each player's titles, runner-ups, total finals, and points; click a name for a full profile (win %, best surface, per-surface breakdown)
 - 🏳️ **Country flags** — players are shown with their national flag across stats, search, rankings, and profiles
 - 🏆 **Champions wall** — every title winner of the season at a glance
-- 🏁 **Race to the Finals** — the live top 10 in the ATP / WTA race, with a line marking the top-8 qualification cutoff, each player's points cushion or shortfall, and who has already qualified
+- 🏁 **Race to the Finals** — the live top 10 in the ATP / WTA race, with a line marking the top-8 qualification cutoff, each player's points cushion or shortfall, events played, titles, and who has already qualified. Click a player for a **points breakdown**: every tournament they've played this season, grouped into Grand Slams, 1000s, and best other results, with the round reached and points earned (skipped mandatory events are shown too)
 - 📊 **Rankings** — a "Rankings" button shows the top 20 ATP/WTA players for the displayed month, with points, ▲▼ movement vs. the previous snapshot, and a "race to #1" chart. Snapshots are captured roughly every two weeks
+- ⓘ **How points work** — an info button in the Rankings and Race views explains ranking points: what each round is worth at each tournament level, the best-18 rule, and how the 52-week rankings differ from the calendar-year race
 - 🔵🩷 **ATP / WTA toggle** — switch between the men's and women's tour instantly
 - 🎨 **Vibrant dark theme** — colour-coded by tournament level (Grand Slam / 1500 / 1000 / 500 / 250) with glows and gradients
 
@@ -159,4 +160,4 @@ Tournament data is stored in a [GitHub Gist](https://gist.github.com/abhinavp403
 
 Results (`winner`, `runner_up`, `score`) are sourced from Wikipedia once a tournament finishes. The `_full` names power first-name search, and a companion `players.json` maps each player to their country code for the flags.
 
-Everything is maintained by a GitHub Actions workflow that runs **twice daily** (01:00 and 09:00 UTC) and pushes straight to the Gist — no app rebuild needed. It verifies tournament dates against Wikipedia (so a rain-delayed final gets corrected), fetches new results, and resolves each new finalist's full name and country from their own Wikipedia article.
+Everything is maintained by a GitHub Actions workflow that runs **twice daily** (01:00 and 09:00 UTC) and pushes straight to the Gist — no app rebuild needed. It verifies tournament dates against Wikipedia (so a rain-delayed final gets corrected), fetches new results, resolves each new finalist's full name and country from their own Wikipedia article, and refreshes the race standings (`race.json`) from the "Points breakdown" tables on Wikipedia's ATP Finals and WTA Finals pages.
