@@ -23,4 +23,7 @@ $NODE scripts/enrichPlayers.js >> "$LOG" 2>&1
 # Fetch missing rankings (also pushes to Gist if updated)
 $NODE scripts/fetchRankings.js >> "$LOG" 2>&1
 
+# Race to the Finals top 10 (pushes race.json to Gist if changed)
+$NODE scripts/fetchRace.js >> "$LOG" 2>&1
+
 echo "=== Done ===" >> "$LOG"

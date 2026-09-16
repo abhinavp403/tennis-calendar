@@ -37,11 +37,11 @@ The data-maintenance scripts (`fetchResults.js`, `fetchRankings.js`, `fixDates.j
 
 ### Renderer ↔ main bridge
 
-`electron/preload.cjs` is the only IPC surface. It exposes `getTournaments`, `getRankings`, `getSyncTime` (all `sendSync`), and `triggerSync` (async). The renderer never writes; it only reads via `window.electronAPI`. Adding new data access means: edit the preload, add a handler in `main.js`, then consume in React.
+`electron/preload.cjs` is the only IPC surface. It exposes `getTournaments`, `getRankings`, `getPlayers`, `getRace`, `getSyncTime` (all `sendSync`), and `triggerSync` (async). The renderer never writes; it only reads via `window.electronAPI`. Adding new data access means: edit the preload, add a handler in `main.js`, then consume in React.
 
 ### Scheduled data updates
 
-**`.github/workflows/daily-data-update.yml` is the live automation** — it runs `fixDates.js`, `fetchResults.js`, `enrichPlayers.js`, `fetchRankings.js` in that order, twice daily (01:00 and 09:00 UTC), authenticating with the `GIST_TOKEN` secret. `fetchResults` only picks up a tournament once its end date has passed **in UTC**, so the 01:00 run is what catches the previous day's finals; 09:00 is the catch-up pass.
+**`.github/workflows/daily-data-update.yml` is the live automation** — it runs `fixDates.js`, `fetchResults.js`, `enrichPlayers.js`, `fetchRankings.js`, `fetchRace.js` in that order, twice daily (01:00 and 09:00 UTC), authenticating with the `GIST_TOKEN` secret. `fetchResults` only picks up a tournament once its end date has passed **in UTC**, so the 01:00 run is what catches the previous day's finals; 09:00 is the catch-up pass.
 
 Each script reads the current data and pushes its changes to the Gist — no git commit needed. Because they run sequentially and several touch `tournaments.json`, reads go through the GitHub API (read-your-writes) so each step sees the previous one's push.
 
@@ -54,6 +54,8 @@ Each script reads the current data and pushes its changes to the Gist — no git
 **`players.json`**: `{atp: { "A. Eala": "PHI" }, wta: {...}}` — abbreviated name → IOC country code, used for the flags in player stats, search, and the profile (`src/utils/flags.js` maps the code to a flag emoji). Rankings flags come from `rankings.json`'s own `country` field instead.
 
 Both the full names and the countries are populated by **`scripts/enrichPlayers.js`**, which resolves each player from *their own Wikipedia article* (search `"<lastname> tennis player"`, match surname + initial) — independent of tournament-page scraping, so it isn't affected by tournament-name/page-title mismatches. The country comes from that article's `| country = {{PHI}}` infobox field, falling back to the season tour page's `{{flagicon|CAN}}` tag for articles using a format we don't parse. It runs daily after `fetchResults.js` and only looks up players missing a name or a country, so new finalists are picked up automatically.
+
+**`race.json`**: `{atp: {asOf, players: RacePlayer[]}, wta: {...}}` — the current top 10 in the season race (ATP Race to Turin / Race to the WTA Finals), each with `rank`, `name`, `full`, `country`, `points`, `tournaments`, `titles`, `qualified`. Written by `scripts/fetchRace.js` from the singles "Points breakdown" table on Wikipedia's `"<year> ATP Finals"` / `"<year> WTA Finals"` pages; only the latest snapshot is kept (the race resets each January). It refuses to overwrite with a partial parse. Shown in `RaceToFinalsDialog.jsx` with the qualification cutoff after #8. Optional in the renderer — if missing, the dialog shows an empty state.
 
 **`rankings.json`**: `{atp: { [key]: Player[] }, wta: { [key]: Player[] }}`. Each player: `rank`, `name`, `country`, `points`, optional `movement`. Snapshot keys are **mixed**: legacy `"YYYY-MM"` (monthly, Jan–Jun 2026, treated as the month's last day) and `"YYYY-MM-DD"` (bi-weekly, the exact Monday the rankings reflect, captured going forward). `fetchRankings.js` parses the Wikipedia page's `{{As of|Y|M|D}}` marker and stores a new snapshot only when it's ≥13 days after the latest one. Consumers normalize both key forms via a `keyDate`/`rankingKeyDate` helper (see `Calendar.jsx` and `RankingsDialog.jsx`); Wikipedia exposes only the current week, so older bi-weekly history cannot be backfilled.
 

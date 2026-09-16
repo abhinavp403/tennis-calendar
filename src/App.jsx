@@ -7,6 +7,7 @@ import PlayerSearch from './components/PlayerSearch.jsx';
 import PlayerProfileDialog from './components/PlayerProfileDialog.jsx';
 import MonthYearPicker from './components/MonthYearPicker.jsx';
 import ChampionsWallDialog from './components/ChampionsWallDialog.jsx';
+import RaceToFinalsDialog from './components/RaceToFinalsDialog.jsx';
 import { loadInitialData, loadData, getSyncTime, setSyncTime, triggerSync, isWebMode } from './dataSource.js';
 import { cumulativeCompleted, buildPlayerStats } from './utils/playerStats.js';
 
@@ -42,6 +43,7 @@ export default function App() {
   // Tournament id to flash after a search jump
   const [flashId, setFlashId] = useState(null);
   const [showChampionsWall, setShowChampionsWall] = useState(false);
+  const [showRace, setShowRace] = useState(false);
   // Player stat selected from the header search → opens the profile drill-down
   const [profilePlayer, setProfilePlayer] = useState(null);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
@@ -360,6 +362,22 @@ export default function App() {
           🏆 Champions
         </button>
 
+        {/* Race to the Finals */}
+        <button
+          onClick={() => setShowRace(true)}
+          style={{
+            fontSize: '11px', fontWeight: '700', letterSpacing: '0.3px',
+            padding: '4px 12px', borderRadius: '999px',
+            border: '1px solid #252540', background: '#16162a',
+            color: accentColor, cursor: 'pointer', flexShrink: 0,
+            transition: 'all 0.15s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = `${accentColor}66`; e.currentTarget.style.background = `${accentColor}14`; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = '#252540'; e.currentTarget.style.background = '#16162a'; }}
+        >
+          🏁 Race to Finals
+        </button>
+
         {/* Vertical divider (desktop only — sections stack on mobile) */}
         <div className="hidden sm:block" style={{ width: 1, height: 24, background: '#252545' }} />
 
@@ -442,6 +460,15 @@ export default function App() {
           tournaments={tourTournaments}
           tour={tour}
           onClose={() => setShowChampionsWall(false)}
+        />
+      )}
+
+      {showRace && (
+        <RaceToFinalsDialog
+          race={data.race?.[tour]}
+          finals={tourTournaments.find(t => /finals/i.test(t.name) && t.start.startsWith(String(dayjs().year())))}
+          tour={tour}
+          onClose={() => setShowRace(false)}
         />
       )}
 

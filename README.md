@@ -20,6 +20,7 @@ A desktop app built with **Electron + React + Vite** that displays the full 2026
 - 📈 **Player Stats (YTD)** — a season-long leaderboard ranked by *level-weighted points* (a Grand Slam counts far more than a stack of 250s), showing each player's titles, runner-ups, total finals, and points; click a name for a full profile (win %, best surface, per-surface breakdown)
 - 🏳️ **Country flags** — players are shown with their national flag across stats, search, rankings, and profiles
 - 🏆 **Champions wall** — every title winner of the season at a glance
+- 🏁 **Race to the Finals** — the live top 10 in the ATP / WTA race, with a line marking the top-8 qualification cutoff, each player's points cushion or shortfall, and who has already qualified
 - 📊 **Rankings** — a "Rankings" button shows the top 20 ATP/WTA players for the displayed month, with points, ▲▼ movement vs. the previous snapshot, and a "race to #1" chart. Snapshots are captured roughly every two weeks
 - 🔵🩷 **ATP / WTA toggle** — switch between the men's and women's tour instantly
 - 🎨 **Vibrant dark theme** — colour-coded by tournament level (Grand Slam / 1500 / 1000 / 500 / 250) with glows and gradients

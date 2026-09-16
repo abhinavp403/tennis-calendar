@@ -65,3 +65,8 @@ jobs:
         run: node scripts/fetchRankings.js
         env:
           GH_TOKEN: ${{ secrets.GIST_TOKEN }}
+
+      - name: Fetch race to the Finals standings
+        run: node scripts/fetchRace.js
+        env:
+          GH_TOKEN: ${{ secrets.GIST_TOKEN }}

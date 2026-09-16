@@ -20,9 +20,10 @@ export function loadInitialData() {
       tournaments: window.electronAPI.getTournaments?.() ?? EMPTY_TOURNAMENTS,
       rankings: window.electronAPI.getRankings?.() ?? EMPTY_RANKINGS,
       players: window.electronAPI.getPlayers?.() ?? EMPTY_PLAYERS,
+      race: window.electronAPI.getRace?.() ?? {},
     };
   }
-  return { tournaments: EMPTY_TOURNAMENTS, rankings: EMPTY_RANKINGS, players: EMPTY_PLAYERS };
+  return { tournaments: EMPTY_TOURNAMENTS, rankings: EMPTY_RANKINGS, players: EMPTY_PLAYERS, race: {} };
 }
 
 // Async fetch of the latest data.
@@ -30,16 +31,18 @@ export function loadInitialData() {
 export async function loadData() {
   if (!isWebMode()) return loadInitialData();
 
-  const [tRes, rRes, pRes] = await Promise.all([
+  const [tRes, rRes, pRes, raceRes] = await Promise.all([
     fetch(`${GIST_RAW_BASE}/tournaments.json`, { cache: 'no-cache' }),
     fetch(`${GIST_RAW_BASE}/rankings.json`, { cache: 'no-cache' }),
     fetch(`${GIST_RAW_BASE}/players.json`, { cache: 'no-cache' }),
+    fetch(`${GIST_RAW_BASE}/race.json`, { cache: 'no-cache' }),
   ]);
   if (!tRes.ok || !rRes.ok) throw new Error('Failed to load data from Gist');
   const [tournaments, rankings] = await Promise.all([tRes.json(), rRes.json()]);
-  // players.json is supplementary (country flags) — tolerate it being missing.
+  // players.json / race.json are supplementary — tolerate them being missing.
   const players = pRes.ok ? await pRes.json() : EMPTY_PLAYERS;
-  return { tournaments, rankings, players };
+  const race = raceRes.ok ? await raceRes.json() : {};
+  return { tournaments, rankings, players, race };
 }
 
 const SYNC_KEY = 'tennis_calendar_last_synced';
