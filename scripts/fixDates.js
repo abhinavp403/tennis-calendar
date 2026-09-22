@@ -18,14 +18,16 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_PATH = path.join(__dirname, '../data/tournaments.json');
 const UA = 'TennisCalendar/1.0 (https://github.com/abhinavp403/tennis-calendar; noreply@github.com) node-fetch';
 
-// Only check tournaments ending within this many days from today
-const LOOKAHEAD_DAYS = 14;
+// Only check tournaments ending within this many days from today.
+// Overridable so a full-season audit can sweep everything:
+//   SKIP_GIST_PUSH=1 LOOKBACK_DAYS=400 node scripts/fixDates.js
+const LOOKAHEAD_DAYS = Number(process.env.LOOKAHEAD_DAYS ?? 14);
 
 // Also re-check tournaments that have *just* ended. A rain delay pushes the
 // final past the scheduled end date (e.g. the 2026 DC Open finals slipped from
 // Sun 2 Aug to Mon 3 Aug), and without this the stored date is already in the
 // past by the time Wikipedia is updated, so it could never be corrected.
-const LOOKBACK_DAYS = 3;
+const LOOKBACK_DAYS = Number(process.env.LOOKBACK_DAYS ?? 3);
 
 // Delay between Wikipedia API calls to avoid rate limiting (ms)
 const REQUEST_DELAY = 600;
@@ -100,42 +102,65 @@ async function getWikitext(title) {
 }
 
 /**
- * Parses Wikipedia infobox date strings into an ISO end date (YYYY-MM-DD).
- * Handles formats like:
- *   "13–19 April"           → 2026-04-19
- *   "April 13–19, 2026"     → 2026-04-19
- *   "13 April – 19 April"   → 2026-04-19
- *   "23 February – 1 March" → 2026-03-01 (cross-month)
+ * Parses a single (not range) date — "21 September 2026", "16 May 2026",
+ * "September 21, 2026", "2026-09-21" — into ISO. This is what a singles
+ * subpage's `date` field holds: the day the final was played.
+ *
+ * The `(?!\d)` guards stop a citation's "January 2025" from reading as day 20.
  */
-function parseDateField(dateStr, year) {
-  dateStr = dateStr.replace(/\{\{.*?\}\}/g, '').replace(/\[\[|\]\]/g, '').trim();
+function parseSingleDate(dateStr, year) {
+  dateStr = dateStr.replace(/\{\{.*?\}\}/g, '').replace(/\[\[|\]\]/g, '').split('|')[0].trim();
 
-  let endDay, endMonth;
+  let m = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})\b/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
 
-  // "13–19 April" or "13-19 April"
-  let m = dateStr.match(new RegExp(`\\d+\\s*[–\\-]\\s*(\\d+)\\s+(${MONTH_PATTERN})`, 'i'));
-  if (m) { endDay = m[1]; endMonth = MONTHS[m[2].toLowerCase()]; }
+  m = dateStr.match(new RegExp(`^(\\d{1,2})(?!\\d)\\s+(${MONTH_PATTERN})`, 'i'));
+  if (m) return `${year}-${MONTHS[m[2].toLowerCase()]}-${m[1].padStart(2, '0')}`;
 
-  // "April 13–19" or "April 13-19"
-  if (!endDay) {
-    m = dateStr.match(new RegExp(`(${MONTH_PATTERN})\\s+\\d+\\s*[–\\-]\\s*(\\d+)`, 'i'));
-    if (m) { endDay = m[2]; endMonth = MONTHS[m[1].toLowerCase()]; }
+  m = dateStr.match(new RegExp(`^(${MONTH_PATTERN})\\s+(\\d{1,2})(?!\\d)`, 'i'));
+  if (m) return `${year}-${MONTHS[m[1].toLowerCase()]}-${m[2].padStart(2, '0')}`;
+
+  return null;
+}
+
+/**
+ * The singles final's date, from the per-tour subpage of an event article.
+ *
+ * This is the only trustworthy source for our `end` field, which means *that
+ * tour's singles final day*. The parent page's date range does not:
+ *   - it ends on the DOUBLES final, often a day later (2026 Berlin Tennis Open
+ *     reads "15–22 June"; the singles final was the 21st), and
+ *   - on a combined ATP/WTA page it ends on the MEN'S final, so copying it onto
+ *     a WTA entry pushes it a day late (2026 Miami: WTA Mar 28, ATP Mar 29).
+ *
+ * Returns null when no subpage carries a date — the caller then leaves the
+ * stored date alone, because a wrong correction is worse than none.
+ */
+async function getSinglesFinalDate(articleTitle, tour, year) {
+  const suffixes = tour === 'atp'
+    ? ["– Men's singles", '– Singles']
+    : ["– Women's singles", '– Singles'];
+
+  for (const suffix of suffixes) {
+    await sleep(REQUEST_DELAY);
+    const wikitext = await getWikitext(`${articleTitle} ${suffix}`);
+    if (!wikitext) continue;
+    // Only the infobox at the top, and only a line that *starts* the field:
+    // `{{cite web|...|date=...}}` inside a reference is a publication date, not
+    // the final's, and several of these subpages carry no infobox date at all.
+    const head = wikitext.split('\n').slice(0, 40);
+    const line = head.find(l => /^\s*\|\s*date\s*=/i.test(l));
+    if (!line) continue;
+    const parsed = parseSingleDate(line.split('=').slice(1).join('=').trim(), year);
+    if (parsed) return { date: parsed, source: `${articleTitle} ${suffix}` };
   }
+  return null;
+}
 
-  // "13 April – 19 April" or "23 February – 1 March" (cross-month)
-  if (!endDay) {
-    m = dateStr.match(new RegExp(`\\d+\\s+(?:${MONTH_PATTERN})\\s*[–\\-]\\s*(\\d+)\\s+(${MONTH_PATTERN})`, 'i'));
-    if (m) { endDay = m[1]; endMonth = MONTHS[m[2].toLowerCase()]; }
-  }
-
-  // "August 1 – August 13" or "July 27 – August 2" (month named on both sides)
-  if (!endDay) {
-    m = dateStr.match(new RegExp(`(?:${MONTH_PATTERN})\\s+\\d+\\s*[–\\-]\\s*(${MONTH_PATTERN})\\s+(\\d+)`, 'i'));
-    if (m) { endMonth = MONTHS[m[1].toLowerCase()]; endDay = m[2]; }
-  }
-
-  if (!endDay || !endMonth) return null;
-  return `${year}-${endMonth}-${endDay.padStart(2, '0')}`;
+/** A date can only end this tournament if it falls 0–21 days after its start. */
+function isPlausibleEnd(date, tournament) {
+  const days = (new Date(date) - new Date(tournament.start)) / (1000 * 60 * 60 * 24);
+  return days >= 0 && days <= 21;
 }
 
 /**
@@ -196,11 +221,18 @@ async function checkTournamentDate(tournament, tour) {
     const wikitext = await getWikitext(candidate.title);
     if (!wikitext) continue;
 
-    const dateMatch = wikitext.match(/\|\s*date\s*=\s*([^\n|]+)/i);
-    if (!dateMatch) continue;
-
-    const correctEnd = parseDateField(dateMatch[1].trim(), year);
-    if (!correctEnd) continue;
+    // Only the singles subpage is trusted — see getSinglesFinalDate. The parent
+    // article's range is deliberately NOT used as a fallback: it ends on the
+    // doubles final (or the men's final on a combined page), so it would push
+    // correct dates a day late.
+    const singles = await getSinglesFinalDate(candidate.title, tour, year);
+    if (!singles) {
+      console.log(`  – No singles final date on "${candidate.title}" subpages — leaving ${tournament.end} alone`);
+      return null;
+    }
+    const correctEnd = singles.date;
+    const source = singles.source;
+    if (!isPlausibleEnd(correctEnd, tournament)) continue;
 
     // Skip title-overlap check for manually mapped tournaments — the mapping is authoritative
     if (!usedMapping && !isValidMatch(correctEnd, tournament, candidate.title)) {
@@ -217,7 +249,7 @@ async function checkTournamentDate(tournament, tour) {
       continue;
     }
 
-    return { correctEnd, source: candidate.title };
+    return { correctEnd, source };
   }
   return null;
 }
