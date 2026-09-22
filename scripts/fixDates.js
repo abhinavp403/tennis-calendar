@@ -153,6 +153,16 @@ function isValidMatch(correctEnd, tournament, wikiTitle) {
   const stopWords = new Set(['the', 'open', 'of', 'de', 'la', 'le', 'and', 'international', 'tennis', 'championships', 'masters', 'grand', 'prix']);
   const titleWords = wikiTitle.toLowerCase().replace(/\d{4}/g, '').split(/\W+/).filter(w => w.length > 2 && !stopWords.has(w));
   const nameWords  = tournament.name.toLowerCase().split(/\W+/).filter(w => w.length > 2 && !stopWords.has(w));
+
+  // Names made only of short tokens and stop words ("SP Open") leave nothing to
+  // compare, which used to reject every match — including correct ones, so a
+  // rain-delayed final could never be corrected. Compare the whole name instead.
+  if (titleWords.length === 0 || nameWords.length === 0) {
+    const norm = s => s.toLowerCase().replace(/\d{4}/g, '').replace(/\W+/g, ' ').trim();
+    const t = norm(wikiTitle), n = norm(tournament.name);
+    return t === n || t.includes(n) || n.includes(t);
+  }
+
   return titleWords.some(w => nameWords.some(n => n.includes(w) || w.includes(n)));
 }
 
