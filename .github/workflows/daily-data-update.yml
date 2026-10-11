@@ -4,15 +4,22 @@ name: Daily Data Update
 # full first names, then pushes updated tournaments.json to the Gist that the
 # app reads at launch.
 #
-# Runs twice a day. fetchResults only picks up a tournament once its end date
-# has passed in UTC, so the 01:00 run is what catches the previous day's finals
-# (most finals are Sun) within hours; 09:00 is the catch-up pass for anything
-# Wikipedia hadn't published yet.
+# Runs every 6 hours. fetchResults only picks up a tournament once its end date
+# has passed in UTC, so the 01:23 pass is what catches the previous day's finals
+# (most finals are Sun); the rest are catch-up passes for anything Wikipedia
+# hadn't published yet.
+#
+# Minute 23 rather than 0 on purpose: GitHub deprioritises scheduled runs under
+# load and the top of the hour is the busiest slot. On the old "0 1"/"0 9"
+# schedule runs were firing 6–7 hours late (they were created late, not queued).
+# Four passes also mean a delayed one matters less.
 
 on:
   schedule:
-    - cron: "0 1 * * *"
-    - cron: "0 9 * * *"
+    - cron: "23 1 * * *"
+    - cron: "23 7 * * *"
+    - cron: "23 13 * * *"
+    - cron: "23 19 * * *"
   workflow_dispatch:
 
 permissions:

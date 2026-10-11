@@ -4,6 +4,8 @@ name: Update Calendar (.ics)
 # commits it back to the repo, where GitHub serves it over raw.githubusercontent.
 #
 # Runs 30 minutes after each Daily Data Update pass (which takes ~1 min), so the
+# feed reflects results the same cycle they land. Both workflows are delayed by
+# the same amount when GitHub runs them late, so the offset holds in practice.
 # feed reflects results the same run they land. It used to trigger on pushes to
 # data/tournaments.json, but that file was removed when the app moved to
 # Gist-only data, so it never fired again and the feed sat frozen —
@@ -14,8 +16,10 @@ name: Update Calendar (.ics)
 
 on:
   schedule:
-    - cron: "30 1 * * *"
-    - cron: "30 9 * * *"
+    - cron: "53 1 * * *"
+    - cron: "53 7 * * *"
+    - cron: "53 13 * * *"
+    - cron: "53 19 * * *"
   workflow_dispatch:
 
 permissions:

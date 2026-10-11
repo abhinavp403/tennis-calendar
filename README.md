@@ -123,7 +123,7 @@ https://raw.githubusercontent.com/abhinavp403/tennis-calendar/main/tennis_calend
 - **Apple Calendar**: File → New Calendar Subscription → paste the link above
 - **Outlook**: Add calendar → From internet → paste the link above
 
-The feed is regenerated straight after each data update (twice daily), so when a tournament finishes, the winner, runner-up, and score appear in the event description within hours.
+The feed is regenerated straight after each data update (every 6 hours), so when a tournament finishes, the winner, runner-up, and score appear in the event description within hours.
 
 **One-time download (static snapshot):**
 
@@ -160,4 +160,4 @@ Tournament data is stored in a [GitHub Gist](https://gist.github.com/abhinavp403
 
 Results (`winner`, `runner_up`, `score`) are sourced from Wikipedia once a tournament finishes. The `_full` names power first-name search, and a companion `players.json` maps each player to their country code for the flags.
 
-Everything is maintained by a GitHub Actions workflow that runs **twice daily** (01:00 and 09:00 UTC) and pushes straight to the Gist — no app rebuild needed. It verifies tournament dates against Wikipedia (so a rain-delayed final gets corrected), fetches new results, resolves each new finalist's full name and country from their own Wikipedia article, and refreshes the race standings (`race.json`) from the "Points breakdown" tables on Wikipedia's ATP Finals and WTA Finals pages.
+Everything is maintained by a GitHub Actions workflow that runs **every 6 hours** (01:23, 07:23, 13:23 and 19:23 UTC) and pushes straight to the Gist — no app rebuild needed. It verifies tournament dates against Wikipedia (so a rain-delayed final gets corrected), fetches new results, resolves each new finalist's full name and country from their own Wikipedia article, and refreshes the race standings (`race.json`) from the "Points breakdown" tables on Wikipedia's ATP Finals and WTA Finals pages.
