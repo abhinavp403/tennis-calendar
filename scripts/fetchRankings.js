@@ -20,7 +20,10 @@ const WIKI_PAGE = 'Current tennis rankings';
 const TOP_N = 20;
 // Minimum days between stored snapshots. The tour updates weekly (Mondays), so
 // 13 lets an every-other-Monday cadence through while blocking same-week re-runs.
-const BIWEEKLY_MIN_DAYS = 13;
+// Overridable for a one-off capture when a tour's section lags behind the
+// other and its table would otherwise be skipped:
+//   BIWEEKLY_MIN_DAYS=7 node scripts/fetchRankings.js
+const BIWEEKLY_MIN_DAYS = Number(process.env.BIWEEKLY_MIN_DAYS ?? 13);
 
 async function getWikitext(title) {
   const url =
