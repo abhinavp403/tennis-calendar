@@ -19,6 +19,15 @@ const IOC_TO_ISO2 = {
   CYP: 'CY', LUX: 'LU', IRL: 'IE', ECU: 'EC', BOL: 'BO', URU: 'UY', PAR: 'PY',
   VEN: 'VE', KOR: 'KR', THA: 'TH', PHI: 'PH', INA: 'ID', HKG: 'HK', SGP: 'SG',
   TUR: 'TR', UAE: 'AE', QAT: 'QA', MAR: 'MA', DOM: 'DO', CRC: 'CR',
+
+  // ISO 3166-1 alpha-3 codes, which differ from the IOC code for these
+  // countries. Wikipedia's rankings tables mix the two systems — A. Eala is
+  // tagged PHI in some weekly snapshots and PHL in others — so rankings.json
+  // holds both spellings and either must resolve to a flag.
+  PHL: 'PH', DEU: 'DE', NLD: 'NL', CHE: 'CH', GRC: 'GR', HRV: 'HR',
+  SVN: 'SI', PRT: 'PT', DNK: 'DK', CHL: 'CL', BGR: 'BG', ZAF: 'ZA',
+  IDN: 'ID', TWN: 'TW', MCO: 'MC', LVA: 'LV', ARE: 'AE', CRI: 'CR',
+  PRY: 'PY', URY: 'UY',
 };
 
 // IOC/3-letter country code → flag emoji, or '' if the code is unknown.
