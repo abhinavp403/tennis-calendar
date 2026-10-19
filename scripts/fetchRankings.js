@@ -125,8 +125,14 @@ function abbreviateName(fullName) {
 // hit an unrelated {{As of}} in the page lede. Reject implausible dates: a
 // future-dated key would make every later gap check negative and permanently
 // block new snapshots.
-function parseAsOfDate(wikitext) {
-  const scope = parseSection(wikitext, 'ATP singles ranking') || wikitext;
+function parseAsOfDate(wikitext, sectionMarker) {
+  // Read the marker from the given tour's own section. The two tours are edited
+  // independently and routinely disagree — on 2026-10-14 the ATP singles table
+  // was "as of 5 October" while WTA singles was already at 12 October — so one
+  // shared date would gate both tours on the laggard AND file the fresher
+  // tour's table under the wrong Monday. Only fall back to a page-wide match
+  // when the section itself carries no marker.
+  const scope = parseSection(wikitext, sectionMarker) || wikitext;
   const m = scope.match(/\{\{As of\|(\d{4})\|(\d{1,2})\|(\d{1,2})/i)
     || wikitext.match(/\{\{As of\|(\d{4})\|(\d{1,2})\|(\d{1,2})/i);
   if (!m) return null;
@@ -189,19 +195,21 @@ export async function fetchMissingRankings(dataPath = DATA_PATH) {
     return false;
   }
 
-  const asOfDate = parseAsOfDate(wikitext);
-  if (!asOfDate) {
+  const asOfAtp = parseAsOfDate(wikitext, 'ATP singles ranking');
+  const asOfWta = parseAsOfDate(wikitext, 'WTA singles ranking');
+  if (!asOfAtp && !asOfWta) {
     console.error('  ✗ Could not determine the "As of" date — skipping to avoid mislabeling');
     return false;
   }
+  console.log(`  ATP as of ${asOfAtp ?? '(unknown)'} · WTA as of ${asOfWta ?? '(unknown)'}`);
 
   const atpKeys = Object.keys(data.atp || {});
   const wtaKeys = Object.keys(data.wta || {});
-  const storeAtp = shouldStore(atpKeys, asOfDate);
-  const storeWta = shouldStore(wtaKeys, asOfDate);
+  const storeAtp = asOfAtp !== null && shouldStore(atpKeys, asOfAtp);
+  const storeWta = asOfWta !== null && shouldStore(wtaKeys, asOfWta);
 
   if (!storeAtp && !storeWta) {
-    console.log(`Rankings are up to date (latest is within ${BIWEEKLY_MIN_DAYS} days of ${asOfDate}).`);
+    console.log(`Rankings are up to date (each tour's latest is within ${BIWEEKLY_MIN_DAYS} days of its "As of" date).`);
     return false;
   }
 
@@ -234,8 +242,8 @@ export async function fetchMissingRankings(dataPath = DATA_PATH) {
 
   if (storeAtp && atpPlayers.length >= MIN_PLAYERS) {
     if (!data.atp) data.atp = {};
-    data.atp[asOfDate] = atpPlayers;
-    console.log(`  ✓ ATP rankings saved for ${asOfDate} (${atpPlayers.length} players)`);
+    data.atp[asOfAtp] = atpPlayers;
+    console.log(`  ✓ ATP rankings saved for ${asOfAtp} (${atpPlayers.length} players)`);
     updated = true;
   } else if (storeAtp) {
     console.log(`  ✗ ATP parse too sparse (${atpPlayers.length} players, need ${MIN_PLAYERS}) — not storing`);
@@ -243,8 +251,8 @@ export async function fetchMissingRankings(dataPath = DATA_PATH) {
 
   if (storeWta && wtaPlayers.length >= MIN_PLAYERS) {
     if (!data.wta) data.wta = {};
-    data.wta[asOfDate] = wtaPlayers;
-    console.log(`  ✓ WTA rankings saved for ${asOfDate} (${wtaPlayers.length} players)`);
+    data.wta[asOfWta] = wtaPlayers;
+    console.log(`  ✓ WTA rankings saved for ${asOfWta} (${wtaPlayers.length} players)`);
     updated = true;
   } else if (storeWta) {
     console.log(`  ✗ WTA parse too sparse (${wtaPlayers.length} players, need ${MIN_PLAYERS}) — not storing`);
