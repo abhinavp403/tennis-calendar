@@ -70,7 +70,17 @@ export default function Calendar({ currentDate, tournaments, allTournaments, tou
     const d = rankingKeyDate(k);
     return d.getFullYear() === currentDate.year() && d.getMonth() === currentDate.month();
   });
-  const activeRankingKey = monthSnapshotKeys.at(-1) ?? null;
+  // Snapshots are captured bi-weekly, so the current month often has none for
+  // its first couple of weeks. Rather than hiding rankings entirely, fall back
+  // to the most recent snapshot — but only for the month in progress, and
+  // labelled "Latest" so it never reads as that month's own figures. Past
+  // months with no snapshot still show nothing.
+  const isCurrentMonth =
+    currentDate.year() === dayjs().year() && currentDate.month() === dayjs().month();
+  const latestToDate = sortedRankingKeys.filter(k => rankingKeyDate(k) <= new Date()).at(-1) ?? null;
+  const activeRankingKey = monthSnapshotKeys.at(-1) ?? (isCurrentMonth ? latestToDate : null);
+  const usingLatestFallback = monthSnapshotKeys.length === 0 && activeRankingKey !== null;
+  const rankingsLabel = usingLatestFallback ? 'Latest' : monthLabel;
   const rankings = activeRankingKey ? tourRankings[activeRankingKey] : null;
   const activeRankingIdx = activeRankingKey ? sortedRankingKeys.indexOf(activeRankingKey) : -1;
   const prevRankings = activeRankingIdx > 0 ? tourRankings[sortedRankingKeys[activeRankingIdx - 1]] : null;
@@ -146,7 +156,7 @@ export default function Calendar({ currentDate, tournaments, allTournaments, tou
               onMouseEnter={e => (e.currentTarget.style.background = `${accentColor}22`)}
               onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
             >
-              📊 {monthLabel} Rankings
+              📊 {rankingsLabel} Rankings
             </button>
           )}
         </div>
@@ -205,7 +215,7 @@ export default function Calendar({ currentDate, tournaments, allTournaments, tou
 
       {showRankings && rankings && (
         <RankingsDialog
-          monthLabel={monthLabel}
+          monthLabel={rankingsLabel}
           rankings={rankings}
           prevRankings={prevRankings}
           allRankings={tourRankings}
