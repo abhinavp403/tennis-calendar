@@ -225,13 +225,30 @@ export async function fetchMissingRankings(dataPath = DATA_PATH) {
     return false;
   }
 
-  // Build country lookup from all stored snapshots (for noflag players)
+  // Build country lookup for players the table tags {{noflag}}.
+  //
+  // players.json first: enrichPlayers resolves each player from their own
+  // Wikipedia article, so it covers neutral athletes the rankings page shows
+  // without a flag — A. Kalinskaya is RUS there but flagless in every ranking
+  // snapshot, so she had no country at all. Stored snapshots then fill in
+  // anyone players.json doesn't know (it only tracks finalists).
   const countryLookup = {};
+  try {
+    const players = (await fetchGistFiles(['players.json']))['players.json'];
+    for (const tour of ['atp', 'wta']) {
+      for (const [name, code] of Object.entries(players?.[tour] ?? {})) {
+        if (code) countryLookup[name] = code;
+      }
+    }
+  } catch (err) {
+    // Supplementary only — a failed read must not stop the snapshot.
+    console.log(`  – players.json unavailable for country lookup (${err.message})`);
+  }
   for (const tour of ['atp', 'wta']) {
     for (const key of Object.keys(data[tour] || {})) {
       for (const player of data[tour][key]) {
         if (player.country) {
-          countryLookup[player.name] = player.country;
+          countryLookup[player.name] ??= player.country;
         }
       }
     }
