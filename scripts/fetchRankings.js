@@ -60,9 +60,18 @@ function parseRankingsTable(section, countryLookup = {}) {
     const rank = parseInt(rankMatch[1], 10);
     if (rank > TOP_N) break;
 
-    // Next line has player info: |{{flagathlete|[[Name]]|COUNTRY}} || points || move
+    // The player cell follows the rank cell: |{{flagathlete|[[Name]]|COUNTRY}} || points || move
     // or: |{{noflag}}[[Name]]|| points || move
-    const nextLine = rows[i + 1]?.trim() ?? '';
+    //
+    // Not always on the very next line — the ATP table carried a blank line
+    // between its rank-1 cell and Sinner's row (19 Oct 2026), which silently
+    // dropped the world No. 1. Skip blanks, but only a couple, so a malformed
+    // row can't pair a rank with some later player's line.
+    let nextLine = '';
+    for (let j = i + 1; j < rows.length && j <= i + 3; j++) {
+      const candidate = rows[j].trim();
+      if (candidate) { nextLine = candidate; break; }
+    }
 
     // Extract player name from [[Name]] or [[Name|Display]] or [[Name (tennis)|Display]]
     const nameMatch = nextLine.match(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/);
@@ -243,22 +252,43 @@ export async function fetchMissingRankings(dataPath = DATA_PATH) {
   // gate out the corrected re-fetch for ~2 weeks.
   const MIN_PLAYERS = 10;
 
-  if (storeAtp && atpPlayers.length >= MIN_PLAYERS) {
+  // A count alone isn't enough — the 19 Oct 2026 ATP parse returned 19 players
+  // and passed, but they started at rank 2 because the No. 1 row was skipped.
+  // Ranks must start at 1 and then either advance by position or repeat the
+  // previous rank, which is a genuine tie only when the points match too.
+  // (A repeat with different points is how a dropped row shows up: the WTA's
+  // 14 Sep 2026 snapshot has E. Mertens and J. Paolini both at 19 on 2,165 and
+  // 2,123 points, with no 20.)
+  const tableProblem = players => {
+    if (players.length < MIN_PLAYERS) return `only ${players.length} players, need ${MIN_PLAYERS}`;
+    if (players[0].rank !== 1) return `starts at rank ${players[0].rank}, not 1`;
+    for (let i = 1; i < players.length; i++) {
+      const p = players[i], prev = players[i - 1];
+      if (p.rank === i + 1) continue;
+      if (p.rank === prev.rank && p.points === prev.points) continue; // tie
+      return p.rank === prev.rank
+        ? `rank ${p.rank} repeats on different points (${prev.points} vs ${p.points})`
+        : `rank sequence breaks at ${p.rank} (position ${i + 1})`;
+    }
+    return null;
+  };
+
+  if (storeAtp && !tableProblem(atpPlayers)) {
     if (!data.atp) data.atp = {};
     data.atp[asOfAtp] = atpPlayers;
     console.log(`  ✓ ATP rankings saved for ${asOfAtp} (${atpPlayers.length} players)`);
     updated = true;
   } else if (storeAtp) {
-    console.log(`  ✗ ATP parse too sparse (${atpPlayers.length} players, need ${MIN_PLAYERS}) — not storing`);
+    console.log(`  ✗ ATP parse incomplete (${tableProblem(atpPlayers)}) — not storing`);
   }
 
-  if (storeWta && wtaPlayers.length >= MIN_PLAYERS) {
+  if (storeWta && !tableProblem(wtaPlayers)) {
     if (!data.wta) data.wta = {};
     data.wta[asOfWta] = wtaPlayers;
     console.log(`  ✓ WTA rankings saved for ${asOfWta} (${wtaPlayers.length} players)`);
     updated = true;
   } else if (storeWta) {
-    console.log(`  ✗ WTA parse too sparse (${wtaPlayers.length} players, need ${MIN_PLAYERS}) — not storing`);
+    console.log(`  ✗ WTA parse incomplete (${tableProblem(wtaPlayers)}) — not storing`);
   }
 
   if (updated) {
