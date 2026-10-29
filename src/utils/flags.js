@@ -5,7 +5,7 @@
 // Note: flag emoji render as flags on macOS, iOS, Android, and most browsers,
 // but Windows (Chrome/Edge/Electron) shows the two letters instead — swap this
 // for bundled SVGs if Windows flag rendering matters.
-const IOC_TO_ISO2 = {
+export const IOC_TO_ISO2 = {
   // Present in the current data
   ARG: 'AR', AUS: 'AU', AUT: 'AT', BEL: 'BE', BLR: 'BY', CAN: 'CA', CHI: 'CL',
   CHN: 'CN', CRO: 'HR', CZE: 'CZ', DEN: 'DK', EGY: 'EG', ESP: 'ES', FRA: 'FR',

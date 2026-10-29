@@ -1,16 +1,20 @@
 /**
- * Fetches current ATP and WTA rankings from Wikipedia's "Current tennis rankings"
- * page and stores a snapshot keyed by the page's "As of" date (the weekly Monday
- * the rankings reflect). Snapshots are captured at most once per ~2 weeks
- * (bi-weekly). Wikipedia only exposes the current week, so history cannot be
- * backfilled — legacy monthly keys ("YYYY-MM") remain and are read alongside the
- * new date keys ("YYYY-MM-DD").
+ * Fetches current ATP and WTA rankings and stores a snapshot keyed by the Monday
+ * they reflect. Snapshots are captured at most once per ~2 weeks (bi-weekly);
+ * legacy monthly keys ("YYYY-MM") remain and are read alongside date keys.
+ *
+ * TennisExplorer is the primary source (see tennisExplorer.js): it publishes
+ * both tours on the same schedule and states the date each table reflects.
+ * Wikipedia's "Current tennis rankings" is the fallback — it is hand-edited, so
+ * the two tours drift apart and the markup occasionally breaks — and is used per
+ * tour, only when TennisExplorer fails or returns an unusable table.
  */
 
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import { updateGistContent, fetchGistFiles } from './updateGist.js';
+import { fetchRankingTable, buildNameIndex } from './tennisExplorer.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_PATH = path.join(__dirname, '../data/rankings.json');
@@ -200,49 +204,25 @@ export async function fetchMissingRankings(dataPath = DATA_PATH) {
     ? JSON.parse(readFileSync(dataPath, 'utf-8'))
     : (await fetchGistFiles(['rankings.json']))['rankings.json'];
 
-  console.log('Fetching current rankings from Wikipedia...');
-  const wikitext = await getWikitext(WIKI_PAGE);
-  if (!wikitext) {
-    console.error('  ✗ Could not fetch Wikipedia page');
-    return false;
-  }
-
-  const asOfAtp = parseAsOfDate(wikitext, 'ATP singles ranking');
-  const asOfWta = parseAsOfDate(wikitext, 'WTA singles ranking');
-  if (!asOfAtp && !asOfWta) {
-    console.error('  ✗ Could not determine the "As of" date — skipping to avoid mislabeling');
-    return false;
-  }
-  console.log(`  ATP as of ${asOfAtp ?? '(unknown)'} · WTA as of ${asOfWta ?? '(unknown)'}`);
-
-  const atpKeys = Object.keys(data.atp || {});
-  const wtaKeys = Object.keys(data.wta || {});
-  const storeAtp = asOfAtp !== null && shouldStore(atpKeys, asOfAtp);
-  const storeWta = asOfWta !== null && shouldStore(wtaKeys, asOfWta);
-
-  if (!storeAtp && !storeWta) {
-    console.log(`Rankings are up to date (each tour's latest is within ${BIWEEKLY_MIN_DAYS} days of its "As of" date).`);
-    return false;
-  }
-
-  // Build country lookup for players the table tags {{noflag}}.
+  // Country lookup, also used to keep a player's code spelling stable.
   //
   // players.json first: enrichPlayers resolves each player from their own
-  // Wikipedia article, so it covers neutral athletes the rankings page shows
+  // Wikipedia article, so it covers neutral athletes a rankings table shows
   // without a flag — A. Kalinskaya is RUS there but flagless in every ranking
   // snapshot, so she had no country at all. Stored snapshots then fill in
   // anyone players.json doesn't know (it only tracks finalists).
-  const countryLookup = {};
+  let playersJson = {};
   try {
-    const players = (await fetchGistFiles(['players.json']))['players.json'];
-    for (const tour of ['atp', 'wta']) {
-      for (const [name, code] of Object.entries(players?.[tour] ?? {})) {
-        if (code) countryLookup[name] = code;
-      }
-    }
+    playersJson = (await fetchGistFiles(['players.json']))['players.json'] ?? {};
   } catch (err) {
     // Supplementary only — a failed read must not stop the snapshot.
-    console.log(`  – players.json unavailable for country lookup (${err.message})`);
+    console.log(`  – players.json unavailable for name/country lookup (${err.message})`);
+  }
+  const countryLookup = {};
+  for (const tour of ['atp', 'wta']) {
+    for (const [name, code] of Object.entries(playersJson?.[tour] ?? {})) {
+      if (code) countryLookup[name] = code;
+    }
   }
   for (const tour of ['atp', 'wta']) {
     for (const key of Object.keys(data[tour] || {})) {
@@ -254,19 +234,13 @@ export async function fetchMissingRankings(dataPath = DATA_PATH) {
     }
   }
 
-  // Parse ATP rankings
-  const atpSection = parseSection(wikitext, 'ATP singles ranking');
-  const atpPlayers = parseRankingsTable(atpSection, countryLookup);
-
-  // Parse WTA rankings
-  const wtaSection = parseSection(wikitext, 'WTA singles ranking');
-  const wtaPlayers = parseRankingsTable(wtaSection, countryLookup);
-
-  let updated = false;
+  // Canonical spellings, so a source that strips accents or runs a compound
+  // surname together still stores "I. Świątek" / "F. Auger-Aliassime".
+  const nameIndex = buildNameIndex(data, playersJson);
 
   // Require a mostly-complete table before storing: a partial parse (e.g. after
-  // a Wikipedia format change) would persist a junk snapshot AND its key would
-  // gate out the corrected re-fetch for ~2 weeks.
+  // a layout change) would persist a junk snapshot AND its key would gate out
+  // the corrected re-fetch for ~2 weeks.
   const MIN_PLAYERS = 10;
 
   // A count alone isn't enough — the 19 Oct 2026 ATP parse returned 19 players
@@ -290,22 +264,63 @@ export async function fetchMissingRankings(dataPath = DATA_PATH) {
     return null;
   };
 
-  if (storeAtp && !tableProblem(atpPlayers)) {
-    if (!data.atp) data.atp = {};
-    data.atp[asOfAtp] = atpPlayers;
-    console.log(`  ✓ ATP rankings saved for ${asOfAtp} (${atpPlayers.length} players)`);
+  // Wikipedia is only fetched if a tour needs the fallback, and only once.
+  let wikitext = null;
+  const wikipediaFallback = async tour => {
+    const marker = tour === 'atp' ? 'ATP singles ranking' : 'WTA singles ranking';
+    wikitext ??= await getWikitext(WIKI_PAGE);
+    if (!wikitext) return null;
+    const asOf = parseAsOfDate(wikitext, marker);
+    if (!asOf) return null;
+    return { asOf, players: parseRankingsTable(parseSection(wikitext, marker), countryLookup) };
+  };
+
+  let updated = false;
+
+  for (const tour of ['atp', 'wta']) {
+    const label = tour.toUpperCase();
+    let snapshot = null;
+    let source = 'TennisExplorer';
+
+    try {
+      snapshot = await fetchRankingTable(tour, { topN: TOP_N, nameIndex, countryByName: countryLookup });
+      const problem = tableProblem(snapshot.players);
+      if (problem) {
+        console.log(`  – ${label} table from TennisExplorer unusable (${problem}) — trying Wikipedia`);
+        snapshot = null;
+      }
+    } catch (err) {
+      console.log(`  – ${label} TennisExplorer fetch failed (${err.message}) — trying Wikipedia`);
+    }
+
+    if (!snapshot) {
+      source = 'Wikipedia';
+      snapshot = await wikipediaFallback(tour);
+      if (!snapshot) {
+        console.error(`  ✗ ${label}: no usable rankings from either source — skipping`);
+        continue;
+      }
+    }
+
+    const { asOf, players } = snapshot;
+    console.log(`  ${label} as of ${asOf} (${source}, ${players.length} players)`);
+
+    if (!shouldStore(Object.keys(data[tour] || {}), asOf)) continue;
+
+    const problem = tableProblem(players);
+    if (problem) {
+      console.log(`  ✗ ${label} parse incomplete (${problem}) — not storing`);
+      continue;
+    }
+
+    data[tour] ??= {};
+    data[tour][asOf] = players;
+    console.log(`  ✓ ${label} rankings saved for ${asOf} (${players.length} players)`);
     updated = true;
-  } else if (storeAtp) {
-    console.log(`  ✗ ATP parse incomplete (${tableProblem(atpPlayers)}) — not storing`);
   }
 
-  if (storeWta && !tableProblem(wtaPlayers)) {
-    if (!data.wta) data.wta = {};
-    data.wta[asOfWta] = wtaPlayers;
-    console.log(`  ✓ WTA rankings saved for ${asOfWta} (${wtaPlayers.length} players)`);
-    updated = true;
-  } else if (storeWta) {
-    console.log(`  ✗ WTA parse incomplete (${tableProblem(wtaPlayers)}) — not storing`);
+  if (!updated) {
+    console.log(`Rankings are up to date (each tour's latest is within ${BIWEEKLY_MIN_DAYS} days of its ranking date).`);
   }
 
   if (updated) {
