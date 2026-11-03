@@ -75,6 +75,8 @@ const WIKI_NAME_MAP = {
   'gstaad open': 'Swiss Open Gstaad',
   'brussels open': 'European Open',
   'bmw open': 'BMW Open',
+  'vienna open': 'Erste Bank Open',
+  'swiss indoors': 'Swiss Indoors',
 
   // Tour-specific (different Wikipedia pages per tour)
   'morocco open': { atp: 'Grand Prix Hassan II', wta: 'Grand Prix SAR La Princesse Lalla Meryem' },
