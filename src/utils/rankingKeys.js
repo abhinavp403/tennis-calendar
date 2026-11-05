@@ -1,6 +1,6 @@
 // Rankings snapshot keys come in two forms:
 //   "YYYY-MM"    — legacy monthly (Jan–Jun 2026), treated as that month's last day
-//   "YYYY-MM-DD" — bi-weekly, the exact Monday the rankings reflect
+//   "YYYY-MM-DD" — weekly, the exact Monday the rankings reflect
 // Single normalization point so Calendar and RankingsDialog can't drift apart.
 export function rankingKeyDate(key) {
   if (/^\d{4}-\d{2}$/.test(key)) {

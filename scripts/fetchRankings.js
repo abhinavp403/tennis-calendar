@@ -1,6 +1,6 @@
 /**
  * Fetches current ATP and WTA rankings and stores a snapshot keyed by the Monday
- * they reflect. Snapshots are captured at most once per ~2 weeks (bi-weekly);
+ * they reflect. Snapshots are captured weekly, matching how the tours publish;
  * legacy monthly keys ("YYYY-MM") remain and are read alongside date keys.
  *
  * TennisExplorer is the primary source (see tennisExplorer.js): it publishes
@@ -22,12 +22,17 @@ const UA = 'TennisCalendar/1.0 (https://github.com/abhinavp403/tennis-calendar; 
 
 const WIKI_PAGE = 'Current tennis rankings';
 const TOP_N = 20;
-// Minimum days between stored snapshots. The tour updates weekly (Mondays), so
-// 13 lets an every-other-Monday cadence through while blocking same-week re-runs.
-// Overridable for a one-off capture when a tour's section lags behind the
-// other and its table would otherwise be skipped:
-//   BIWEEKLY_MIN_DAYS=7 node scripts/fetchRankings.js
-const BIWEEKLY_MIN_DAYS = Number(process.env.BIWEEKLY_MIN_DAYS ?? 13);
+// Minimum days between stored snapshots. Both tours publish every Monday, so 6
+// lets each week through while still blocking a same-week re-run.
+//
+// This was 13 (fortnightly) while Wikipedia was the source: it exposed only the
+// current week, so dense history was impossible anyway. TennisExplorer posts
+// every Monday, and a fortnightly gate only made the rankings up to 13 days
+// stale and left holes in the race-to-#1 chart.
+//
+// Overridable for a one-off capture outside the cadence:
+//   MIN_SNAPSHOT_GAP_DAYS=3 node scripts/fetchRankings.js
+const MIN_SNAPSHOT_GAP_DAYS = Number(process.env.MIN_SNAPSHOT_GAP_DAYS ?? 6);
 
 async function getWikitext(title) {
   const url =
@@ -182,9 +187,11 @@ function isMonthEndUpdate(asOfDate) {
   return next.getUTCMonth() !== d.getUTCMonth();
 }
 
-// Store a new snapshot if the "As of" date is new AND either it's ≥13 days
-// after the latest snapshot (bi-weekly cadence) OR it's the last weekly ranking
-// of its month (guarantees a true end-of-month snapshot even inside the gap).
+// Store a new snapshot if its date is new AND either it's at least
+// MIN_SNAPSHOT_GAP_DAYS after the latest one OR it's the last weekly ranking of
+// its month (which guaranteed a true end-of-month snapshot back when the gate
+// was fortnightly; weekly capture reaches it anyway, but the branch costs
+// nothing and still covers an unusual Sunday-dated update).
 function shouldStore(existingKeys, asOfDate) {
   if (existingKeys.includes(asOfDate)) return false; // already captured this week
   if (existingKeys.length === 0) return true;
@@ -194,7 +201,7 @@ function shouldStore(existingKeys, asOfDate) {
   // days > 0 keeps the month-end branch from adding a point older than what we
   // already hold (e.g. legacy "2026-06" normalizes to June 30, so June's last
   // Monday June 29 must not be stored on top of it).
-  return days >= BIWEEKLY_MIN_DAYS || (days > 0 && isMonthEndUpdate(asOfDate));
+  return days >= MIN_SNAPSHOT_GAP_DAYS || (days > 0 && isMonthEndUpdate(asOfDate));
 }
 
 export async function fetchMissingRankings(dataPath = DATA_PATH) {
@@ -320,7 +327,7 @@ export async function fetchMissingRankings(dataPath = DATA_PATH) {
   }
 
   if (!updated) {
-    console.log(`Rankings are up to date (each tour's latest is within ${BIWEEKLY_MIN_DAYS} days of its ranking date).`);
+    console.log(`Rankings are up to date (each tour's latest is within ${MIN_SNAPSHOT_GAP_DAYS} days of its ranking date).`);
   }
 
   if (updated) {

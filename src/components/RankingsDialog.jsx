@@ -6,7 +6,7 @@ import { countryFlag } from '../utils/flags.js';
 const SPARK_COLORS = ['#fbbf24', '#94a3b8', '#d97706']; // gold, silver, bronze
 
 // Inline SVG line chart: the active snapshot's top-3 players' points across
-// every earlier snapshot (monthly and bi-weekly), positioned proportionally
+// every earlier snapshot (monthly and weekly), positioned proportionally
 // to real time so mixed cadences don't distort the trend.
 function RaceSparkline({ allRankings, activeKey, rankings }) {
   const activeDate = keyDate(activeKey);
@@ -33,7 +33,7 @@ function RaceSparkline({ allRankings, activeKey, rankings }) {
 
   const W = 460, H = 88, PAD_X = 8, PAD_TOP = 8, PAD_BOTTOM = 18;
   // X position is proportional to real elapsed time, not snapshot index —
-  // a 2-week bi-weekly gap renders narrower than a full monthly gap.
+  // a one-week gap renders narrower than a full monthly gap.
   const t0 = keyDate(keys[0]).getTime();
   const t1 = keyDate(keys[keys.length - 1]).getTime();
   const tSpan = Math.max(t1 - t0, 1);
@@ -41,7 +41,7 @@ function RaceSparkline({ allRankings, activeKey, rankings }) {
   const y = v => PAD_TOP + (1 - (v - min) / span) * (H - PAD_TOP - PAD_BOTTOM);
 
   // Label the first point and each month boundary; never repeat a month, so a
-  // trailing bi-weekly point doesn't produce a duplicate label.
+  // trailing weekly point doesn't produce a duplicate label.
   const labelFor = i => {
     const d = keyDate(keys[i]);
     const isNewMonth = i === 0 || keyDate(keys[i - 1]).getMonth() !== d.getMonth();

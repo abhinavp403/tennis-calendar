@@ -60,7 +60,7 @@ export default function Calendar({ currentDate, tournaments, allTournaments, tou
   const monthLabel = currentDate.format('MMMM YYYY');
 
   // Rankings can be keyed by month ("2026-06", legacy) or by the exact
-  // Monday they reflect ("2026-07-13", bi-weekly). Show the latest snapshot
+  // Monday they reflect ("2026-07-13", weekly). Show the latest snapshot
   // that falls within the displayed month; compare movement to the one before.
   const tourRankings = rankingsData?.[tour] ?? {};
   const sortedRankingKeys = Object.keys(tourRankings).sort(
@@ -70,8 +70,8 @@ export default function Calendar({ currentDate, tournaments, allTournaments, tou
     const d = rankingKeyDate(k);
     return d.getFullYear() === currentDate.year() && d.getMonth() === currentDate.month();
   });
-  // Snapshots are captured bi-weekly, so the current month often has none for
-  // its first couple of weeks. Rather than hiding rankings entirely, fall back
+  // Snapshots are captured weekly, so a month in progress can still have none
+  // of its own in its first days. Rather than hiding rankings entirely, fall back
   // to the most recent snapshot — but only for the month in progress, and
   // labelled "Latest" so it never reads as that month's own figures. Past
   // months with no snapshot still show nothing.
