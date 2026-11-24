@@ -23,7 +23,7 @@ function CardLogo({ tournament }) {
           width: 34, height: 34, borderRadius: 8, flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           background: '#1a1a2e', border: `1px solid ${style.color}55`,
-          fontSize: '11px', fontWeight: '800', color: style.color,
+          fontSize: '14px', fontWeight: '800', color: style.color,
         }}
       >
         {tournament.name.slice(0, 2).toUpperCase()}
@@ -74,7 +74,7 @@ export default function ChampionsWallDialog({ tournaments, tour, onClose }) {
         position: 'fixed', inset: 0, zIndex: 10000,
         backgroundColor: 'rgba(0,0,0,0.7)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '24px',
+        padding: '30px',
       }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
@@ -84,7 +84,7 @@ export default function ChampionsWallDialog({ tournaments, tour, onClose }) {
           border: '1px solid #2a2a3a',
           borderRadius: '12px',
           width: '100%',
-          maxWidth: '820px',
+          maxWidth: '1040px',
           maxHeight: '88vh',
           display: 'flex',
           flexDirection: 'column',
@@ -95,16 +95,16 @@ export default function ChampionsWallDialog({ tournaments, tour, onClose }) {
         <div
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '18px 22px 14px',
+            padding: '22px 28px 18px',
             borderBottom: '1px solid #2a2a3a',
             flexShrink: 0,
           }}
         >
           <div>
-            <div style={{ fontSize: '18px', fontWeight: '700', color: 'white' }}>
+            <div style={{ fontSize: '22.5px', fontWeight: '700', color: 'white' }}>
               🏆 Champions Wall — 2026
             </div>
-            <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px', letterSpacing: '0.3px' }}>
+            <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '2px', letterSpacing: '0.3px' }}>
               Every {tour.toUpperCase()} title winner of the season so far
             </div>
           </div>
@@ -112,8 +112,8 @@ export default function ChampionsWallDialog({ tournaments, tour, onClose }) {
             onClick={onClose}
             style={{
               background: '#1a1a24', border: '1px solid #2a2a3a', borderRadius: '6px',
-              color: '#9ca3af', fontSize: '18px', lineHeight: 1,
-              width: '32px', height: '32px', cursor: 'pointer',
+              color: '#9ca3af', fontSize: '22.5px', lineHeight: 1,
+              width: '38px', height: '38px', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
             onMouseEnter={e => (e.currentTarget.style.background = '#2a2a3a')}
@@ -127,7 +127,7 @@ export default function ChampionsWallDialog({ tournaments, tour, onClose }) {
         <div
           style={{
             display: 'flex', flexWrap: 'wrap', gap: '18px',
-            padding: '12px 22px',
+            padding: '15px 28px',
             borderBottom: '1px solid #1e1e30',
             flexShrink: 0,
           }}
@@ -139,16 +139,16 @@ export default function ChampionsWallDialog({ tournaments, tour, onClose }) {
             slamWinners.length > 0 && { label: 'SLAM CHAMPIONS', value: [...new Set(slamWinners)].join(', ') },
           ].filter(Boolean).map(s => (
             <div key={s.label}>
-              <div style={{ fontSize: '9px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.6px' }}>{s.label}</div>
-              <div style={{ fontSize: '13px', fontWeight: '700', color: '#e5e7eb', marginTop: '2px' }}>{s.value}</div>
+              <div style={{ fontSize: '11px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.6px' }}>{s.label}</div>
+              <div style={{ fontSize: '16px', fontWeight: '700', color: '#e5e7eb', marginTop: '2px' }}>{s.value}</div>
             </div>
           ))}
         </div>
 
         {/* Wall */}
-        <div style={{ overflowY: 'auto', padding: '16px 22px 22px' }}>
+        <div style={{ overflowY: 'auto', padding: '20px 28px 28px' }}>
           {completed.length === 0 ? (
-            <div style={{ color: '#6b7280', fontSize: '13px', textAlign: 'center', padding: '32px 0' }}>
+            <div style={{ color: '#6b7280', fontSize: '16px', textAlign: 'center', padding: '40px 0' }}>
               No completed tournaments yet — the wall fills in as the season unfolds.
             </div>
           ) : (
@@ -156,7 +156,7 @@ export default function ChampionsWallDialog({ tournaments, tour, onClose }) {
               <div key={month} style={{ marginBottom: '18px' }}>
                 <div
                   style={{
-                    fontSize: '11px', fontWeight: '800', color: accentColor,
+                    fontSize: '14px', fontWeight: '800', color: accentColor,
                     letterSpacing: '1.2px', textTransform: 'uppercase',
                     marginBottom: '10px', paddingBottom: '4px',
                     borderBottom: '1px solid #1e1e30',
@@ -167,7 +167,7 @@ export default function ChampionsWallDialog({ tournaments, tour, onClose }) {
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(288px, 1fr))',
                     gap: '10px',
                   }}
                 >
@@ -179,7 +179,7 @@ export default function ChampionsWallDialog({ tournaments, tour, onClose }) {
                         style={{
                           border: `1px solid ${lv.color}44`,
                           borderRadius: '10px',
-                          padding: '10px 12px',
+                          padding: '12px 15px',
                           background: 'rgba(255,255,255,0.02)',
                           boxShadow: `0 0 12px ${lv.glow}`,
                           display: 'flex', flexDirection: 'column', gap: '8px',
@@ -189,10 +189,18 @@ export default function ChampionsWallDialog({ tournaments, tour, onClose }) {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
                           <CardLogo tournament={t} />
                           <div style={{ minWidth: 0, flex: 1 }}>
-                            <div style={{ fontSize: '12px', fontWeight: '700', color: '#e5e7eb', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {/* Up to two lines, so long names ("Grand Prix Auvergne-Rhône-Alpes")
+                                read in full at the larger size instead of being cut off. */}
+                            <div
+                              title={t.name}
+                              style={{
+                                fontSize: '15px', fontWeight: '700', color: '#e5e7eb', lineHeight: 1.25,
+                                display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                              }}
+                            >
                               {t.name}
                             </div>
-                            <div style={{ fontSize: '10px', color: '#6b7280', marginTop: '1px' }}>
+                            <div style={{ fontSize: '12.5px', color: '#6b7280', marginTop: '1px' }}>
                               {dayjs(t.end).format('MMM D')}
                               {t.surface && (
                                 <span style={{ color: SURFACE_COLORS[t.surface] ?? '#9ca3af' }}> · {t.surface}</span>
@@ -201,8 +209,8 @@ export default function ChampionsWallDialog({ tournaments, tour, onClose }) {
                           </div>
                           <span
                             style={{
-                              fontSize: '9px', fontWeight: '800', letterSpacing: '0.4px',
-                              padding: '2px 7px', borderRadius: '999px', flexShrink: 0,
+                              fontSize: '11px', fontWeight: '800', letterSpacing: '0.4px',
+                              padding: '2px 9px', borderRadius: '999px', flexShrink: 0,
                               border: `1px solid ${lv.color}66`, color: lv.color,
                             }}
                           >
@@ -211,11 +219,11 @@ export default function ChampionsWallDialog({ tournaments, tour, onClose }) {
                         </div>
                         {/* Champion */}
                         <div>
-                          <div style={{ fontSize: '14px', fontWeight: '800', color: 'white' }}>
+                          <div style={{ fontSize: '17.5px', fontWeight: '800', color: 'white' }}>
                             🏆 {t.winner}
                           </div>
                           {t.runner_up && (
-                            <div style={{ fontSize: '11px', color: '#8b8fa8', marginTop: '2px' }}>
+                            <div style={{ fontSize: '14px', color: '#8b8fa8', marginTop: '2px' }}>
                               def. {t.runner_up}{t.score ? ` · ${t.score}` : ''}
                             </div>
                           )}

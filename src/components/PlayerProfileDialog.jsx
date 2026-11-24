@@ -21,8 +21,8 @@ const LEVEL_COLOR = { 2000: '#a78bfa', 1500: '#a78bfa', 1000: '#f59e0b', 500: '#
 
 // Shared look for the level and surface tags on each tournament row.
 const tagStyle = (color, bg) => ({
-  fontSize: '10px', fontWeight: '700',
-  padding: '2px 6px', borderRadius: '4px',
+  fontSize: '12px', fontWeight: '700',
+  padding: '3px 8px', borderRadius: '4px',
   background: bg, color,
   letterSpacing: '0.3px', whiteSpace: 'nowrap',
 });
@@ -97,17 +97,17 @@ export default function PlayerProfileDialog({ stat, profile, tour, monthLabel, o
         gridTemplateColumns: '1fr auto',
         alignItems: 'center',
         gap: '8px',
-        padding: '8px 10px',
+        padding: '11px 14px',
         borderRadius: '6px',
         background: 'rgba(255,255,255,0.02)',
         marginBottom: '4px',
       }}
     >
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: '13px', color: '#e5e7eb', fontWeight: '600' }}>
+        <div style={{ fontSize: '15.5px', color: '#e5e7eb', fontWeight: '600' }}>
           {t.name}
         </div>
-        <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
+        <div style={{ fontSize: '13px', color: '#6b7280', marginTop: '2px' }}>
           {[t.opponent && `vs ${t.opponent}`, t.score].filter(Boolean).join(' · ')}
         </div>
       </div>
@@ -143,7 +143,7 @@ export default function PlayerProfileDialog({ stat, profile, tour, monthLabel, o
           border: `1px solid ${accentColor}`,
           borderRadius: '12px',
           width: '100%',
-          maxWidth: '540px',
+          maxWidth: '700px',
           maxHeight: '85vh',
           display: 'flex',
           flexDirection: 'column',
@@ -154,19 +154,19 @@ export default function PlayerProfileDialog({ stat, profile, tour, monthLabel, o
         <div
           style={{
             display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
-            padding: '18px 20px 14px',
+            padding: '24px 28px 18px',
             borderBottom: '1px solid #2a2a3a',
             flexShrink: 0,
           }}
         >
           <div style={{ flex: 1, minWidth: 0, marginRight: '12px' }}>
-            <div style={{ fontSize: '20px', fontWeight: '700', color: 'white' }}>
+            <div style={{ fontSize: '27px', fontWeight: '700', color: 'white' }}>
               {stat.country && <span style={{ marginRight: '8px' }}>{countryFlag(stat.country)}</span>}
               {/* Full name when we have it ("Félix Auger-Aliassime"), else the abbreviated one */}
               {profile?.full ?? stat.name}
             </div>
             {profileDetails(profile).length > 0 && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: '5px 18px', marginTop: '10px', fontSize: '12.5px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '7px 24px', marginTop: '14px', fontSize: '15px' }}>
                 {profileDetails(profile).map(item => (
                   <div
                     key={item.label}
@@ -184,8 +184,8 @@ export default function PlayerProfileDialog({ stat, profile, tour, monthLabel, o
             onClick={onClose}
             style={{
               background: '#1a1a24', border: '1px solid #2a2a3a', borderRadius: '6px',
-              color: '#9ca3af', fontSize: '18px', lineHeight: 1,
-              width: '32px', height: '32px', cursor: 'pointer',
+              color: '#9ca3af', fontSize: '22px', lineHeight: 1,
+              width: '38px', height: '38px', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
             }}
@@ -202,7 +202,7 @@ export default function PlayerProfileDialog({ stat, profile, tour, monthLabel, o
             display: 'grid',
             gridTemplateColumns: 'repeat(4, 1fr)',
             gap: '8px',
-            padding: '14px 20px',
+            padding: '18px 28px',
             borderBottom: '1px solid #1e1e30',
             flexShrink: 0,
           }}
@@ -221,12 +221,12 @@ export default function PlayerProfileDialog({ stat, profile, tour, monthLabel, o
         <div
           style={{
             display: 'flex', flexWrap: 'wrap', gap: '6px',
-            padding: '12px 20px',
+            padding: '14px 28px',
             borderBottom: '1px solid #1e1e30',
             flexShrink: 0,
           }}
         >
-          <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', alignSelf: 'center', marginRight: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', alignSelf: 'center', marginRight: '4px' }}>
             BY SURFACE
           </span>
           {Object.entries(SURFACE_META).map(([key, meta]) => {
@@ -237,8 +237,8 @@ export default function PlayerProfileDialog({ stat, profile, tour, monthLabel, o
               <span
                 key={key}
                 style={{
-                  fontSize: '11px', fontWeight: '700',
-                  padding: '4px 8px', borderRadius: '6px',
+                  fontSize: '13px', fontWeight: '700',
+                  padding: '5px 10px', borderRadius: '6px',
                   background: dim ? 'rgba(255,255,255,0.02)' : meta.bg,
                   color: dim ? '#3b3f55' : meta.color,
                   letterSpacing: '0.3px',
@@ -251,10 +251,10 @@ export default function PlayerProfileDialog({ stat, profile, tour, monthLabel, o
         </div>
 
         {/* Tournament lists */}
-        <div style={{ overflowY: 'auto', padding: '14px 20px 18px' }}>
+        <div style={{ overflowY: 'auto', padding: '18px 28px 24px' }}>
           {stat.winsList.length > 0 && (
             <div style={{ marginBottom: stat.runnerUpList.length > 0 ? '14px' : 0 }}>
-              <div style={{ fontSize: '10px', fontWeight: '700', color: '#fde68a', letterSpacing: '0.5px', marginBottom: '8px' }}>
+              <div style={{ fontSize: '12.5px', fontWeight: '700', color: '#fde68a', letterSpacing: '0.5px', marginBottom: '8px' }}>
                 🏆 TITLES ({stat.winsList.length})
               </div>
               {stat.winsList.map((t, i) => renderEntry(t, `w-${i}`))}
@@ -262,14 +262,14 @@ export default function PlayerProfileDialog({ stat, profile, tour, monthLabel, o
           )}
           {stat.runnerUpList.length > 0 && (
             <div>
-              <div style={{ fontSize: '10px', fontWeight: '700', color: '#9ca3af', letterSpacing: '0.5px', marginBottom: '8px' }}>
+              <div style={{ fontSize: '12.5px', fontWeight: '700', color: '#9ca3af', letterSpacing: '0.5px', marginBottom: '8px' }}>
                 🥈 RUNNER-UP ({stat.runnerUpList.length})
               </div>
               {stat.runnerUpList.map((t, i) => renderEntry(t, `r-${i}`))}
             </div>
           )}
           {stat.winsList.length === 0 && stat.runnerUpList.length === 0 && (
-            <div style={{ color: '#6b7280', fontSize: '13px', textAlign: 'center', padding: '24px 0' }}>
+            <div style={{ color: '#6b7280', fontSize: '15px', textAlign: 'center', padding: '24px 0' }}>
               No final appearances yet.
             </div>
           )}
@@ -282,11 +282,11 @@ export default function PlayerProfileDialog({ stat, profile, tour, monthLabel, o
 function Stat({ label, value, accent, icon }) {
   return (
     <div style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', marginBottom: '4px' }}>
+      <div style={{ fontSize: '12px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', marginBottom: '4px' }}>
         {label}
       </div>
-      <div style={{ fontSize: '18px', fontWeight: '700', color: accent }}>
-        {icon && <span style={{ fontSize: '14px', marginRight: '4px' }}>{icon}</span>}
+      <div style={{ fontSize: '24px', fontWeight: '700', color: accent }}>
+        {icon && <span style={{ fontSize: '18px', marginRight: '4px' }}>{icon}</span>}
         {value}
       </div>
     </div>

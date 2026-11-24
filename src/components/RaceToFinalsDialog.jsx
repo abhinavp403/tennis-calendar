@@ -20,7 +20,7 @@ function Breakdown({ results, tour }) {
   return (
     <div
       style={{
-        margin: '0 0 8px 36px', padding: '8px 12px',
+        margin: '0 0 8px 36px', padding: '10px 15px',
         background: 'rgba(255,255,255,0.025)', border: '1px solid #1e1e30', borderRadius: '8px',
       }}
     >
@@ -29,11 +29,11 @@ function Breakdown({ results, tour }) {
         if (rows.length === 0) return null;
         const subtotal = rows.reduce((s, r) => s + r.points, 0);
         return (
-          <div key={key} style={{ padding: '4px 0' }}>
+          <div key={key} style={{ padding: '5px 0' }}>
             <div
               style={{
                 display: 'flex', justifyContent: 'space-between',
-                fontSize: '9.5px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', marginBottom: '2px',
+                fontSize: '12px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', marginBottom: '2px',
               }}
             >
               <span>{label(tour).toUpperCase()}</span>
@@ -45,8 +45,8 @@ function Breakdown({ results, tour }) {
                 <div
                   key={i}
                   style={{
-                    display: 'grid', gridTemplateColumns: '1fr 52px 48px', alignItems: 'center',
-                    fontSize: '11.5px', padding: '2px 0', opacity: absent ? 0.45 : 1,
+                    display: 'grid', gridTemplateColumns: '1fr 65px 60px', alignItems: 'center',
+                    fontSize: '14.5px', padding: '2px 0', opacity: absent ? 0.45 : 1,
                   }}
                 >
                   <span style={{ color: '#c4c4d4', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -54,7 +54,7 @@ function Breakdown({ results, tour }) {
                   </span>
                   <span
                     style={{
-                      fontSize: '10px', fontWeight: '700', textAlign: 'center',
+                      fontSize: '12.5px', fontWeight: '700', textAlign: 'center',
                       color: ROUND_COLORS[r.round] ?? '#6b7280',
                     }}
                   >
@@ -100,7 +100,7 @@ export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
         position: 'fixed', inset: 0, zIndex: 10000,
         backgroundColor: 'rgba(0,0,0,0.65)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '24px',
+        padding: '30px',
       }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
@@ -110,7 +110,7 @@ export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
           border: '1px solid #2a2a3a',
           borderRadius: '12px',
           width: '100%',
-          maxWidth: '640px',
+          maxWidth: '820px',
           maxHeight: '85vh',
           display: 'flex',
           flexDirection: 'column',
@@ -121,22 +121,22 @@ export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
         <div
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '18px 20px 14px',
+            padding: '22px 25px 18px',
             borderBottom: '1px solid #2a2a3a',
             flexShrink: 0,
           }}
         >
           <div>
-            <div style={{ fontSize: '17px', fontWeight: '700', color: 'white' }}>
+            <div style={{ fontSize: '21px', fontWeight: '700', color: 'white' }}>
               🏁 Race to the Finals
               <InfoButton onClick={() => setShowInfo(true)} />
             </div>
-            <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
+            <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '2px' }}>
               {players.length > 0 ? `Top ${players.length} ` : ''}{tour.toUpperCase()} Singles
               {race?.asOf && <> · as of {dayjs(race.asOf).format('MMM D')}</>}
             </div>
             {finalsLine && (
-              <div style={{ fontSize: '11px', color: accentColor, marginTop: '2px', fontWeight: '600' }}>
+              <div style={{ fontSize: '14px', color: accentColor, marginTop: '2px', fontWeight: '600' }}>
                 {finalsLine}
               </div>
             )}
@@ -145,8 +145,8 @@ export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
             onClick={onClose}
             style={{
               background: '#1a1a24', border: '1px solid #2a2a3a', borderRadius: '6px',
-              color: '#9ca3af', fontSize: '18px', lineHeight: 1,
-              width: '32px', height: '32px', cursor: 'pointer',
+              color: '#9ca3af', fontSize: '22.5px', lineHeight: 1,
+              width: '38px', height: '38px', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
             onMouseEnter={e => (e.currentTarget.style.background = '#2a2a3a')}
@@ -157,7 +157,7 @@ export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
         </div>
 
         {players.length === 0 ? (
-          <div style={{ padding: '32px 20px', textAlign: 'center', color: '#6b7280', fontSize: '13px' }}>
+          <div style={{ padding: '40px 25px', textAlign: 'center', color: '#6b7280', fontSize: '16px' }}>
             Race standings aren't available yet.
           </div>
         ) : (
@@ -166,8 +166,8 @@ export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: '36px 1fr 64px 74px',
-                padding: '10px 20px 6px',
+                gridTemplateColumns: '45px 1fr 80px 92px',
+                padding: '12px 25px 8px',
                 borderBottom: '1px solid #1e1e30',
                 flexShrink: 0,
               }}
@@ -176,7 +176,7 @@ export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
                 <span
                   key={h}
                   style={{
-                    fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px',
+                    fontSize: '12.5px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px',
                     textAlign: i >= 2 ? 'right' : 'left',
                   }}
                 >
@@ -185,7 +185,7 @@ export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
               ))}
             </div>
 
-            <div style={{ overflowY: 'auto', padding: '4px 20px 12px' }}>
+            <div style={{ overflowY: 'auto', padding: '5px 25px 15px' }}>
               {players.map(player => {
                 const inside = player.rank <= CUTOFF;
                 // Inside the cutoff: cushion over the first player out.
@@ -203,14 +203,14 @@ export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
                       title={canExpand ? (isOpen ? 'Hide breakdown' : 'Show where the points came from') : undefined}
                       style={{
                         display: 'grid',
-                        gridTemplateColumns: '36px 1fr 64px 74px',
+                        gridTemplateColumns: '45px 1fr 80px 92px',
                         alignItems: 'center',
-                        padding: '8px 0 6px',
+                        padding: '10px 0 8px',
                         opacity: inside || isOpen ? 1 : 0.6,
                         cursor: canExpand ? 'pointer' : 'default',
                       }}
                     >
-                      <span style={{ fontSize: '13px', fontWeight: '800', color: inside ? accentColor : '#9ca3af' }}>
+                      <span style={{ fontSize: '16px', fontWeight: '800', color: inside ? accentColor : '#9ca3af' }}>
                         {player.rank}
                       </span>
 
@@ -218,14 +218,14 @@ export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
                           <span
                             title={player.country}
-                            style={{ fontSize: '13px', color: '#6b7280', fontWeight: '600', flexShrink: 0, width: '24px', textAlign: 'center' }}
+                            style={{ fontSize: '16px', color: '#6b7280', fontWeight: '600', flexShrink: 0, width: '29px', textAlign: 'center' }}
                           >
                             {countryFlag(player.country) || player.country}
                           </span>
                           <span
                             title={player.full}
                             style={{
-                              fontSize: '13px', fontWeight: inside ? '700' : '500',
+                              fontSize: '16px', fontWeight: inside ? '700' : '500',
                               color: inside ? 'white' : '#c4c4d4',
                               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                             }}
@@ -236,8 +236,8 @@ export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
                             <span
                               title="Qualified for the Finals"
                               style={{
-                                fontSize: '9px', fontWeight: '800', letterSpacing: '0.5px',
-                                padding: '1px 6px', borderRadius: '999px',
+                                fontSize: '11px', fontWeight: '800', letterSpacing: '0.5px',
+                                padding: '1px 8px', borderRadius: '999px',
                                 background: 'rgba(251,191,36,0.15)', color: '#fbbf24',
                                 border: '1px solid rgba(251,191,36,0.4)', flexShrink: 0,
                               }}
@@ -248,7 +248,7 @@ export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
                         </div>
                         {/* Events played and titles won, where the source table has them */}
                         {player.tournaments != null && (
-                          <div style={{ fontSize: '10.5px', color: '#6b7280', fontWeight: '500' }}>
+                          <div style={{ fontSize: '13px', color: '#6b7280', fontWeight: '500' }}>
                             {player.tournaments} event{player.tournaments === 1 ? '' : 's'}
                             {player.titles > 0 && (
                               <> · <span style={{ color: '#fbbf24' }}>{player.titles} title{player.titles === 1 ? '' : 's'}</span></>
@@ -261,7 +261,7 @@ export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
                           </div>
                         )}
                         {/* Points bar, relative to the leader */}
-                        <div style={{ height: '4px', borderRadius: '2px', background: '#1e1e30', marginRight: '8px' }}>
+                        <div style={{ height: '5px', borderRadius: '2px', background: '#1e1e30', marginRight: '8px' }}>
                           <div
                             style={{
                               width: `${(player.points / leaderPts) * 100}%`,
@@ -272,10 +272,10 @@ export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
                         </div>
                       </div>
 
-                      <span style={{ fontSize: '12px', fontFamily: 'monospace', fontWeight: '600', color: '#e5e7eb', textAlign: 'right' }}>
+                      <span style={{ fontSize: '15px', fontFamily: 'monospace', fontWeight: '600', color: '#e5e7eb', textAlign: 'right' }}>
                         {player.points.toLocaleString()}
                       </span>
-                      <span style={{ fontSize: '11px', fontFamily: 'monospace', fontWeight: '700', color: gap?.color, textAlign: 'right' }}>
+                      <span style={{ fontSize: '14px', fontFamily: 'monospace', fontWeight: '700', color: gap?.color, textAlign: 'right' }}>
                         {gap?.text}
                       </span>
                     </div>
@@ -286,7 +286,7 @@ export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
                     {player.rank === CUTOFF && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '6px 0' }}>
                         <div style={{ flex: 1, borderTop: '2px dashed #f87171' }} />
-                        <span style={{ fontSize: '10px', fontWeight: '800', color: '#f87171', letterSpacing: '0.6px' }}>
+                        <span style={{ fontSize: '12.5px', fontWeight: '800', color: '#f87171', letterSpacing: '0.6px' }}>
                           QUALIFICATION CUTOFF
                         </span>
                         <div style={{ flex: 1, borderTop: '2px dashed #f87171' }} />
@@ -297,7 +297,7 @@ export default function RaceToFinalsDialog({ race, finals, tour, onClose }) {
               })}
             </div>
 
-            <div style={{ padding: '10px 20px 14px', borderTop: '1px solid #1e1e30', fontSize: '10.5px', color: '#6b7280', lineHeight: 1.5, flexShrink: 0 }}>
+            <div style={{ padding: '12px 25px 18px', borderTop: '1px solid #1e1e30', fontSize: '13px', color: '#6b7280', lineHeight: 1.5, flexShrink: 0 }}>
               Top {CUTOFF} qualify. GAP shows each player's cushion over #{CUTOFF + 1}, or the points still needed to reach #{CUTOFF}.
               {' '}Exception: a {new Date().getFullYear()} Grand Slam champion ranked 8–20 takes the 8th spot.
             </div>

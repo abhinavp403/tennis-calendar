@@ -50,8 +50,8 @@ function RaceSparkline({ allRankings, activeKey, rankings }) {
   };
 
   return (
-    <div style={{ padding: '12px 20px 4px', borderBottom: '1px solid #1e1e30', flexShrink: 0 }}>
-      <div style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', marginBottom: '6px' }}>
+    <div style={{ padding: '15px 25px 5px', borderBottom: '1px solid #1e1e30', flexShrink: 0 }}>
+      <div style={{ fontSize: '12.5px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', marginBottom: '6px' }}>
         RACE TO #1 — POINTS OVER TIME
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
@@ -107,12 +107,12 @@ function RaceSparkline({ allRankings, activeKey, rankings }) {
         })}
       </svg>
       {/* Legend */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', padding: '6px 0 6px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', padding: '8px 0 8px' }}>
         {series.map((s, si) => (
-          <span key={s.name} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', fontWeight: '600', color: '#c4c4d4' }}>
+          <span key={s.name} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '14px', fontWeight: '600', color: '#c4c4d4' }}>
             <span style={{ width: 10, height: 3, borderRadius: 2, background: SPARK_COLORS[si], display: 'inline-block' }} />
             {s.name}
-            <span style={{ color: '#6b7280', fontFamily: 'monospace', fontSize: '10px' }}>
+            <span style={{ color: '#6b7280', fontFamily: 'monospace', fontSize: '12.5px' }}>
               {(s.points.at(-1)?.points ?? 0).toLocaleString()}
             </span>
           </span>
@@ -169,7 +169,7 @@ export default function RankingsDialog({ monthLabel, rankings, prevRankings, all
         position: 'fixed', inset: 0, zIndex: 10000,
         backgroundColor: 'rgba(0,0,0,0.65)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '24px',
+        padding: '30px',
       }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
@@ -179,7 +179,7 @@ export default function RankingsDialog({ monthLabel, rankings, prevRankings, all
           border: '1px solid #2a2a3a',
           borderRadius: '12px',
           width: '100%',
-          maxWidth: '520px',
+          maxWidth: '680px',
           maxHeight: '85vh',
           display: 'flex',
           flexDirection: 'column',
@@ -190,17 +190,17 @@ export default function RankingsDialog({ monthLabel, rankings, prevRankings, all
         <div
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '18px 20px 14px',
+            padding: '22px 25px 18px',
             borderBottom: '1px solid #2a2a3a',
             flexShrink: 0,
           }}
         >
           <div>
-            <div style={{ fontSize: '17px', fontWeight: '700', color: 'white' }}>
+            <div style={{ fontSize: '21px', fontWeight: '700', color: 'white' }}>
               {monthLabel} — Rankings
               <InfoButton onClick={() => setShowInfo(true)} />
             </div>
-            <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
+            <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '2px' }}>
               Top {rankings.length} {tour.toUpperCase()} Singles
               {isDateKey(activeKey) && (
                 <> · as of {keyDate(activeKey).toLocaleString('en', { month: 'short', day: 'numeric' })}</>
@@ -211,8 +211,8 @@ export default function RankingsDialog({ monthLabel, rankings, prevRankings, all
             onClick={onClose}
             style={{
               background: '#1a1a24', border: '1px solid #2a2a3a', borderRadius: '6px',
-              color: '#9ca3af', fontSize: '18px', lineHeight: 1,
-              width: '32px', height: '32px', cursor: 'pointer',
+              color: '#9ca3af', fontSize: '22.5px', lineHeight: 1,
+              width: '38px', height: '38px', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
             onMouseEnter={e => (e.currentTarget.style.background = '#2a2a3a')}
@@ -229,20 +229,20 @@ export default function RankingsDialog({ monthLabel, rankings, prevRankings, all
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '36px 1fr 70px 40px',
-            padding: '10px 20px 6px',
+            gridTemplateColumns: '45px 1fr 88px 50px',
+            padding: '12px 25px 8px',
             borderBottom: '1px solid #1e1e30',
             flexShrink: 0,
           }}
         >
-          <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px' }}>#</span>
-          <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px' }}>PLAYER</span>
-          <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', textAlign: 'right' }}>POINTS</span>
-          <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', textAlign: 'center' }}>MOVE</span>
+          <span style={{ fontSize: '12.5px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px' }}>#</span>
+          <span style={{ fontSize: '12.5px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px' }}>PLAYER</span>
+          <span style={{ fontSize: '12.5px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', textAlign: 'right' }}>POINTS</span>
+          <span style={{ fontSize: '12.5px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', textAlign: 'center' }}>MOVE</span>
         </div>
 
         {/* Rankings list */}
-        <div style={{ overflowY: 'auto', padding: '4px 20px 16px' }}>
+        <div style={{ overflowY: 'auto', padding: '5px 25px 20px' }}>
           {rankings.map(player => {
             const prevRank = prevByName[player.name];
             const diff = prevRank != null ? prevRank - player.rank : null;
@@ -275,9 +275,9 @@ export default function RankingsDialog({ monthLabel, rankings, prevRankings, all
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: '36px 1fr 70px 40px',
+                  gridTemplateColumns: '45px 1fr 88px 50px',
                   alignItems: 'center',
-                  padding: '7px 0',
+                  padding: '9px 0',
                   cursor: 'pointer',
                   borderRadius: '4px',
                   transition: 'background 0.12s',
@@ -289,7 +289,7 @@ export default function RankingsDialog({ monthLabel, rankings, prevRankings, all
                 {/* Rank */}
                 <span
                   style={{
-                    fontSize: '13px',
+                    fontSize: '16px',
                     fontWeight: isTop3 ? '800' : '600',
                     color: isTop3 ? accentColor : isTop10 ? '#e5e7eb' : '#9ca3af',
                   }}
@@ -302,12 +302,12 @@ export default function RankingsDialog({ monthLabel, rankings, prevRankings, all
                   <span
                     title={player.country}
                     style={{
-                      fontSize: '13px',
+                      fontSize: '16px',
                       color: '#6b7280',
                       fontWeight: '600',
                       letterSpacing: '0.5px',
                       flexShrink: 0,
-                      width: '24px',
+                      width: '29px',
                       textAlign: 'center',
                     }}
                   >
@@ -315,7 +315,7 @@ export default function RankingsDialog({ monthLabel, rankings, prevRankings, all
                   </span>
                   <span
                     style={{
-                      fontSize: '13px',
+                      fontSize: '16px',
                       fontWeight: isTop3 ? '700' : '500',
                       color: isTop3 ? 'white' : isTop10 ? '#e5e7eb' : '#c4c4d4',
                       whiteSpace: 'nowrap',
@@ -330,7 +330,7 @@ export default function RankingsDialog({ monthLabel, rankings, prevRankings, all
                 {/* Points */}
                 <span
                   style={{
-                    fontSize: '12px',
+                    fontSize: '15px',
                     fontFamily: 'monospace',
                     fontWeight: '600',
                     color: isTop10 ? '#e5e7eb' : '#9ca3af',
@@ -343,7 +343,7 @@ export default function RankingsDialog({ monthLabel, rankings, prevRankings, all
                 {/* Movement indicator */}
                 <span
                   style={{
-                    fontSize: '10px',
+                    fontSize: '12.5px',
                     fontWeight: '700',
                     color: moveColor,
                     textAlign: 'center',

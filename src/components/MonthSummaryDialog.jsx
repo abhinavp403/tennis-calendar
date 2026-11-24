@@ -24,7 +24,7 @@ export default function MonthSummaryDialog({ monthLabel, completedTournaments, t
         position: 'fixed', inset: 0, zIndex: 10000,
         backgroundColor: 'rgba(0,0,0,0.65)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '24px',
+        padding: '30px',
       }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
@@ -34,7 +34,7 @@ export default function MonthSummaryDialog({ monthLabel, completedTournaments, t
           border: '1px solid #2a2a3a',
           borderRadius: '12px',
           width: '100%',
-          maxWidth: '560px',
+          maxWidth: '720px',
           maxHeight: '80vh',
           display: 'flex',
           flexDirection: 'column',
@@ -45,15 +45,15 @@ export default function MonthSummaryDialog({ monthLabel, completedTournaments, t
         <div
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '18px 20px 14px',
+            padding: '22px 25px 18px',
             borderBottom: '1px solid #2a2a3a',
           }}
         >
           <div>
-            <div style={{ fontSize: '17px', fontWeight: '700', color: 'white' }}>
+            <div style={{ fontSize: '21px', fontWeight: '700', color: 'white' }}>
               {monthLabel} — Results
             </div>
-            <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
+            <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '2px' }}>
               {completedTournaments.length} tournament{completedTournaments.length !== 1 ? 's' : ''} completed
             </div>
           </div>
@@ -61,8 +61,8 @@ export default function MonthSummaryDialog({ monthLabel, completedTournaments, t
             onClick={onClose}
             style={{
               background: '#1a1a24', border: '1px solid #2a2a3a', borderRadius: '6px',
-              color: '#9ca3af', fontSize: '18px', lineHeight: 1,
-              width: '32px', height: '32px', cursor: 'pointer',
+              color: '#9ca3af', fontSize: '22.5px', lineHeight: 1,
+              width: '38px', height: '38px', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
             onMouseEnter={e => (e.currentTarget.style.background = '#2a2a3a')}
@@ -73,9 +73,9 @@ export default function MonthSummaryDialog({ monthLabel, completedTournaments, t
         </div>
 
         {/* Tournament list */}
-        <div style={{ overflowY: 'auto', padding: '12px 20px 20px' }}>
+        <div style={{ overflowY: 'auto', padding: '15px 25px 25px' }}>
           {completedTournaments.length === 0 ? (
-            <div style={{ color: '#6b7280', fontSize: '13px', textAlign: 'center', padding: '24px 0' }}>
+            <div style={{ color: '#6b7280', fontSize: '16px', textAlign: 'center', padding: '30px 0' }}>
               No completed tournaments this month.
             </div>
           ) : (
@@ -89,26 +89,26 @@ export default function MonthSummaryDialog({ monthLabel, completedTournaments, t
                       backgroundColor: '#1a1a24',
                       border: `1px solid ${s.border}`,
                       borderRadius: '8px',
-                      padding: '12px 14px',
+                      padding: '15px 18px',
                     }}
                   >
                     {/* Tournament name + meta */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
                       <span
                         style={{
-                          fontSize: '10px', fontWeight: '700',
+                          fontSize: '12.5px', fontWeight: '700',
                           color: s.text, backgroundColor: s.bg,
                           border: `1px solid ${s.border}`,
-                          borderRadius: '4px', padding: '1px 6px',
+                          borderRadius: '4px', padding: '1px 8px',
                           whiteSpace: 'nowrap',
                         }}
                       >
                         {t.level}
                       </span>
-                      <span style={{ fontSize: '13px', fontWeight: '700', color: 'white' }}>
+                      <span style={{ fontSize: '16px', fontWeight: '700', color: 'white' }}>
                         {t.name}
                       </span>
-                      <span style={{ fontSize: '11px', color: '#6b7280', marginLeft: 'auto', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '14px', color: '#6b7280', marginLeft: 'auto', whiteSpace: 'nowrap' }}>
                         🎾 {t.surface}
                       </span>
                     </div>
@@ -116,24 +116,24 @@ export default function MonthSummaryDialog({ monthLabel, completedTournaments, t
                     {/* Result rows */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '13px', width: '20px', textAlign: 'center' }}>🏆</span>
-                        <span style={{ fontSize: '13px', fontWeight: '600', color: '#fde68a', flex: 1 }}>
+                        <span style={{ fontSize: '16px', width: '24px', textAlign: 'center' }}>🏆</span>
+                        <span style={{ fontSize: '16px', fontWeight: '600', color: '#fde68a', flex: 1 }}>
                           {t.winner}
                         </span>
                         <span
                           style={{
-                            fontSize: '12px', fontFamily: 'monospace', fontWeight: '700',
+                            fontSize: '15px', fontFamily: 'monospace', fontWeight: '700',
                             color: 'white', backgroundColor: '#0f0f13',
                             border: '1px solid #2a2a3a', borderRadius: '4px',
-                            padding: '2px 8px', whiteSpace: 'nowrap',
+                            padding: '2px 10px', whiteSpace: 'nowrap',
                           }}
                         >
                           {t.score}
                         </span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '13px', width: '20px', textAlign: 'center' }}>🥈</span>
-                        <span style={{ fontSize: '13px', color: '#9ca3af', flex: 1 }}>
+                        <span style={{ fontSize: '16px', width: '24px', textAlign: 'center' }}>🥈</span>
+                        <span style={{ fontSize: '16px', color: '#9ca3af', flex: 1 }}>
                           {t.runner_up}
                         </span>
                       </div>

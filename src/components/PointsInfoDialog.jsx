@@ -27,8 +27,8 @@ export function InfoButton({ onClick }) {
       title="How ranking points work"
       style={{
         background: 'none', border: '1px solid #2a2a3a', borderRadius: '50%',
-        color: '#6b7280', fontSize: '11px', fontWeight: '700', fontStyle: 'italic',
-        fontFamily: 'Georgia, serif', width: '18px', height: '18px', lineHeight: 1,
+        color: '#6b7280', fontSize: '14px', fontWeight: '700', fontStyle: 'italic',
+        fontFamily: 'Georgia, serif', width: '22px', height: '22px', lineHeight: 1,
         cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
         marginLeft: '8px', verticalAlign: 'middle', padding: 0,
       }}
@@ -43,10 +43,10 @@ export function InfoButton({ onClick }) {
 function Section({ title, children }) {
   return (
     <div style={{ marginBottom: '16px' }}>
-      <div style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', marginBottom: '6px' }}>
+      <div style={{ fontSize: '12.5px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', marginBottom: '6px' }}>
         {title}
       </div>
-      <div style={{ fontSize: '12.5px', color: '#c4c4d4', lineHeight: 1.55 }}>{children}</div>
+      <div style={{ fontSize: '15.5px', color: '#c4c4d4', lineHeight: 1.55 }}>{children}</div>
     </div>
   );
 }
@@ -54,7 +54,7 @@ function Section({ title, children }) {
 export default function PointsInfoDialog({ tour, onClose }) {
   const accentColor = tour === 'atp' ? '#3388ff' : '#e060aa';
   const rows = POINTS[tour];
-  const cell = { padding: '6px 4px', textAlign: 'right', fontFamily: 'monospace', fontSize: '12px' };
+  const cell = { padding: '8px 5px', textAlign: 'right', fontFamily: 'monospace', fontSize: '15px' };
 
   return (
     <div
@@ -62,14 +62,14 @@ export default function PointsInfoDialog({ tour, onClose }) {
         position: 'fixed', inset: 0, zIndex: 10001,
         backgroundColor: 'rgba(0,0,0,0.55)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '24px',
+        padding: '30px',
       }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
         style={{
           backgroundColor: '#13131a', border: '1px solid #2a2a3a', borderRadius: '12px',
-          width: '100%', maxWidth: '500px', maxHeight: '85vh',
+          width: '100%', maxWidth: '640px', maxHeight: '85vh',
           display: 'flex', flexDirection: 'column',
           boxShadow: '0 8px 40px rgba(0,0,0,0.8)',
         }}
@@ -77,12 +77,12 @@ export default function PointsInfoDialog({ tour, onClose }) {
         <div
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '18px 20px 14px', borderBottom: '1px solid #2a2a3a', flexShrink: 0,
+            padding: '22px 25px 18px', borderBottom: '1px solid #2a2a3a', flexShrink: 0,
           }}
         >
           <div>
-            <div style={{ fontSize: '17px', fontWeight: '700', color: 'white' }}>How ranking points work</div>
-            <div style={{ fontSize: '11px', color: accentColor, marginTop: '2px', fontWeight: '600' }}>
+            <div style={{ fontSize: '21px', fontWeight: '700', color: 'white' }}>How ranking points work</div>
+            <div style={{ fontSize: '14px', color: accentColor, marginTop: '2px', fontWeight: '600' }}>
               {tour.toUpperCase()} singles
             </div>
           </div>
@@ -90,8 +90,8 @@ export default function PointsInfoDialog({ tour, onClose }) {
             onClick={onClose}
             style={{
               background: '#1a1a24', border: '1px solid #2a2a3a', borderRadius: '6px',
-              color: '#9ca3af', fontSize: '18px', lineHeight: 1,
-              width: '32px', height: '32px', cursor: 'pointer',
+              color: '#9ca3af', fontSize: '22.5px', lineHeight: 1,
+              width: '38px', height: '38px', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
             onMouseEnter={e => (e.currentTarget.style.background = '#2a2a3a')}
@@ -101,7 +101,7 @@ export default function PointsInfoDialog({ tour, onClose }) {
           </button>
         </div>
 
-        <div style={{ overflowY: 'auto', padding: '16px 20px 8px' }}>
+        <div style={{ overflowY: 'auto', padding: '20px 25px 10px' }}>
           <Section title="THE BASICS">
             Players earn points for how far they get in each tournament. Bigger tournaments are worth
             more, and going further is worth more. You get the points for the round you <em>reach</em> —
@@ -113,9 +113,9 @@ export default function PointsInfoDialog({ tour, onClose }) {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
-                    <th style={{ ...cell, textAlign: 'left', fontFamily: 'inherit', fontSize: '10px', color: '#4b5580' }}>LEVEL</th>
+                    <th style={{ ...cell, textAlign: 'left', fontFamily: 'inherit', fontSize: '12.5px', color: '#4b5580' }}>LEVEL</th>
                     {ROUNDS.map(r => (
-                      <th key={r} style={{ ...cell, fontFamily: 'inherit', fontSize: '10px', color: '#4b5580' }}>{r}</th>
+                      <th key={r} style={{ ...cell, fontFamily: 'inherit', fontSize: '12.5px', color: '#4b5580' }}>{r}</th>
                     ))}
                   </tr>
                 </thead>
@@ -135,7 +135,7 @@ export default function PointsInfoDialog({ tour, onClose }) {
                 </tbody>
               </table>
             </div>
-            <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '6px' }}>
+            <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '6px' }}>
               W = champion · F = runner-up · SF / QF = lost in the semis / quarters · R16 = lost in the round of 16.
               Earlier rounds earn less. The season-ending {tour.toUpperCase()} Finals is worth up to 1,500 for an unbeaten champion.
             </div>

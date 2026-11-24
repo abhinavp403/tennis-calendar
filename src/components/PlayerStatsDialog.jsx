@@ -19,15 +19,16 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
   const showTooltip = (e, stat) => {
     if (stat.winsList.length === 0 && stat.runnerUpList.length === 0) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    // Rough estimate: 22px header + 18px per entry + 14px section gap if both lists present
+    // Rough estimate (scaled with the tooltip's text, ×1.25): 28px header +
+    // 23px per entry + 18px section gap if both lists present
     const estHeight =
-      22 + stat.winsList.length * 18 + stat.runnerUpList.length * 18 +
-      (stat.winsList.length > 0 && stat.runnerUpList.length > 0 ? 14 : 0) +
-      24; // padding
+      28 + stat.winsList.length * 23 + stat.runnerUpList.length * 23 +
+      (stat.winsList.length > 0 && stat.runnerUpList.length > 0 ? 18 : 0) +
+      30; // padding
     const spaceBelow = window.innerHeight - rect.bottom;
     const placeAbove = spaceBelow < estHeight + 16;
-    // Keep the tooltip (maxWidth 320px) from overflowing the right viewport edge
-    const left = Math.max(8, Math.min(rect.left, window.innerWidth - 328));
+    // Keep the tooltip (maxWidth 400px) from overflowing the right viewport edge
+    const left = Math.max(8, Math.min(rect.left, window.innerWidth - 408));
     setHoveredPlayer({
       name: stat.name,
       left,
@@ -65,7 +66,7 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
         position: 'fixed', inset: 0, zIndex: 10000,
         backgroundColor: 'rgba(0,0,0,0.65)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '24px',
+        padding: '30px',
       }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
@@ -75,7 +76,7 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
           border: '1px solid #2a2a3a',
           borderRadius: '12px',
           width: '100%',
-          maxWidth: '500px',
+          maxWidth: '660px',
           maxHeight: '85vh',
           display: 'flex',
           flexDirection: 'column',
@@ -86,16 +87,16 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
         <div
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '18px 20px 14px',
+            padding: '22px 25px 18px',
             borderBottom: '1px solid #2a2a3a',
             flexShrink: 0,
           }}
         >
           <div>
-            <div style={{ fontSize: '17px', fontWeight: '700', color: 'white' }}>
+            <div style={{ fontSize: '21px', fontWeight: '700', color: 'white' }}>
               {monthLabel} — Player Stats (YTD)
             </div>
-            <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
+            <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '2px' }}>
               {stats.length} player{stats.length !== 1 ? 's' : ''} — ranked by level-weighted points (YTD)
             </div>
           </div>
@@ -103,8 +104,8 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
             onClick={onClose}
             style={{
               background: '#1a1a24', border: '1px solid #2a2a3a', borderRadius: '6px',
-              color: '#9ca3af', fontSize: '18px', lineHeight: 1,
-              width: '32px', height: '32px', cursor: 'pointer',
+              color: '#9ca3af', fontSize: '22.5px', lineHeight: 1,
+              width: '38px', height: '38px', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
             onMouseEnter={e => (e.currentTarget.style.background = '#2a2a3a')}
@@ -114,28 +115,34 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
           </button>
         </div>
 
+        {/* One scroll area for header + rows. Six fixed columns need more room
+            than a phone has, so below that width the table scrolls sideways
+            inside the dialog instead of spilling out; the header is sticky so
+            it stays aligned with the rows either way. */}
+        <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+        <div style={{ minWidth: '560px' }}>
         {/* Table header */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '34px 1fr 52px 74px 54px 58px',
-            padding: '10px 20px 6px',
+            gridTemplateColumns: '42px 1fr 65px 92px 68px 72px',
+            padding: '12px 25px 8px',
             borderBottom: '1px solid #1e1e30',
-            flexShrink: 0,
+            position: 'sticky', top: 0, zIndex: 1, backgroundColor: '#13131a',
           }}
         >
-          <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px' }}>#</span>
-          <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px' }}>PLAYER</span>
-          <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', textAlign: 'center' }}>WINS</span>
-          <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', textAlign: 'center' }}>RUNNER-UP</span>
-          <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', textAlign: 'center' }}>TOTAL</span>
-          <span style={{ fontSize: '10px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', textAlign: 'center' }}>PTS</span>
+          <span style={{ fontSize: '12.5px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px' }}>#</span>
+          <span style={{ fontSize: '12.5px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px' }}>PLAYER</span>
+          <span style={{ fontSize: '12.5px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', textAlign: 'center' }}>WINS</span>
+          <span style={{ fontSize: '12.5px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', textAlign: 'center' }}>RUNNER-UP</span>
+          <span style={{ fontSize: '12.5px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', textAlign: 'center' }}>TOTAL</span>
+          <span style={{ fontSize: '12.5px', fontWeight: '700', color: '#4b5580', letterSpacing: '0.5px', textAlign: 'center' }}>PTS</span>
         </div>
 
         {/* Stats list */}
-        <div style={{ overflowY: 'auto', padding: '4px 20px 16px' }}>
+        <div style={{ padding: '5px 25px 20px' }}>
           {stats.length === 0 ? (
-            <div style={{ color: '#6b7280', fontSize: '13px', textAlign: 'center', padding: '24px 0' }}>
+            <div style={{ color: '#6b7280', fontSize: '16px', textAlign: 'center', padding: '30px 0' }}>
               No players with tournament results this month.
             </div>
           ) : (
@@ -144,16 +151,16 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
                 key={stat.name}
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: '34px 1fr 52px 74px 54px 58px',
+                  gridTemplateColumns: '42px 1fr 65px 92px 68px 72px',
                   alignItems: 'center',
-                  padding: '10px 0',
+                  padding: '12px 0',
                   borderBottom: idx === stats.length - 1 ? 'none' : '1px solid #1a1a28',
                 }}
               >
                 {/* Rank */}
                 <span
                   style={{
-                    fontSize: '13px',
+                    fontSize: '16px',
                     fontWeight: '700',
                     color: stat.wins > 0 ? accentColor : '#6b7280',
                   }}
@@ -167,7 +174,7 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
                   onMouseLeave={hideTooltip}
                   onClick={() => { hideTooltip(); setSelectedPlayer(stat.name); }}
                   style={{
-                    fontSize: '13px',
+                    fontSize: '16px',
                     fontWeight: stat.wins > 0 ? '600' : '500',
                     color: stat.wins > 0 ? 'white' : '#c4c4d4',
                     cursor: 'pointer',
@@ -188,10 +195,10 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
 
                 {/* Wins */}
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ fontSize: '12px', color: '#fde68a' }}>🏆</span>
+                  <span style={{ fontSize: '15px', color: '#fde68a' }}>🏆</span>
                   <span
                     style={{
-                      fontSize: '13px',
+                      fontSize: '16px',
                       fontWeight: '700',
                       color: stat.wins > 0 ? accentColor : '#4b5580',
                     }}
@@ -202,10 +209,10 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
 
                 {/* Runner-up */}
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ fontSize: '12px', color: '#9ca3af' }}>🥈</span>
+                  <span style={{ fontSize: '15px', color: '#9ca3af' }}>🥈</span>
                   <span
                     style={{
-                      fontSize: '13px',
+                      fontSize: '16px',
                       fontWeight: '600',
                       color: stat.runnerUp > 0 ? '#e5e7eb' : '#4b5580',
                     }}
@@ -217,7 +224,7 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
                 {/* Total finals (wins + runner-ups) */}
                 <span
                   style={{
-                    fontSize: '13px',
+                    fontSize: '16px',
                     fontWeight: '600',
                     textAlign: 'center',
                     color: stat.total > 0 ? '#9ca3af' : '#4b5580',
@@ -229,7 +236,7 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
                 {/* Points (level-weighted, the ranking key) */}
                 <span
                   style={{
-                    fontSize: '13px',
+                    fontSize: '16px',
                     fontWeight: '700',
                     textAlign: 'center',
                     color: stat.points > 0 ? '#e5e7eb' : '#4b5580',
@@ -240,6 +247,8 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
               </div>
             ))
           )}
+        </div>
+        </div>
         </div>
       </div>
 
@@ -258,9 +267,9 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
               backgroundColor: '#0c0c14',
               border: `1px solid ${accentColor}`,
               borderRadius: '8px',
-              padding: '10px 12px',
-              minWidth: '240px',
-              maxWidth: '320px',
+              padding: '12px 15px',
+              minWidth: '288px',
+              maxWidth: '400px',
               boxShadow: '0 6px 24px rgba(0,0,0,0.7)',
               fontWeight: '500',
               pointerEvents: 'none',
@@ -277,8 +286,8 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
                     <span
                       key={key}
                       style={{
-                        fontSize: '10px', fontWeight: '700',
-                        padding: '2px 6px', borderRadius: '4px',
+                        fontSize: '12.5px', fontWeight: '700',
+                        padding: '2px 8px', borderRadius: '4px',
                         background: meta.bg, color: meta.color,
                         letterSpacing: '0.3px',
                       }}
@@ -291,11 +300,11 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
             )}
             {stat.winsList.length > 0 && (
               <div style={{ marginBottom: stat.runnerUpList.length > 0 ? '8px' : 0 }}>
-                <div style={{ fontSize: '10px', fontWeight: '700', color: '#fde68a', letterSpacing: '0.5px', marginBottom: '4px' }}>
+                <div style={{ fontSize: '12.5px', fontWeight: '700', color: '#fde68a', letterSpacing: '0.5px', marginBottom: '4px' }}>
                   🏆 WINS ({stat.winsList.length})
                 </div>
                 {stat.winsList.map((t, i) => (
-                  <div key={`w-${i}`} style={{ fontSize: '12px', color: '#e5e7eb', lineHeight: '1.5' }}>
+                  <div key={`w-${i}`} style={{ fontSize: '15px', color: '#e5e7eb', lineHeight: '1.5' }}>
                     {t.name}
                     {t.level != null && (
                       <span style={{ color: '#6b7280', fontWeight: '500' }}> · {levelLabel(t.level)}</span>
@@ -306,11 +315,11 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
             )}
             {stat.runnerUpList.length > 0 && (
               <div>
-                <div style={{ fontSize: '10px', fontWeight: '700', color: '#9ca3af', letterSpacing: '0.5px', marginBottom: '4px' }}>
+                <div style={{ fontSize: '12.5px', fontWeight: '700', color: '#9ca3af', letterSpacing: '0.5px', marginBottom: '4px' }}>
                   🥈 RUNNER-UP ({stat.runnerUpList.length})
                 </div>
                 {stat.runnerUpList.map((t, i) => (
-                  <div key={`r-${i}`} style={{ fontSize: '12px', color: '#c4c4d4', lineHeight: '1.5' }}>
+                  <div key={`r-${i}`} style={{ fontSize: '15px', color: '#c4c4d4', lineHeight: '1.5' }}>
                     {t.name}
                     {t.level != null && (
                       <span style={{ color: '#6b7280', fontWeight: '500' }}> · {levelLabel(t.level)}</span>
