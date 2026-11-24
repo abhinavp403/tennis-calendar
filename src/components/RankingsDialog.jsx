@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import PointsInfoDialog, { InfoButton } from './PointsInfoDialog.jsx';
+import PlayerProfileDialog from './PlayerProfileDialog.jsx';
 import { rankingKeyDate as keyDate, isDateKey } from '../utils/rankingKeys.js';
 import { countryFlag } from '../utils/flags.js';
 
@@ -121,14 +122,36 @@ function RaceSparkline({ allRankings, activeKey, rankings }) {
   );
 }
 
-export default function RankingsDialog({ monthLabel, rankings, prevRankings, allRankings, activeKey, tour, onClose }) {
+export default function RankingsDialog({ monthLabel, rankings, prevRankings, allRankings, activeKey, tour, statByName = {}, profiles, onClose }) {
   const [showInfo, setShowInfo] = useState(false);
+  const [profile, setProfile] = useState(null);
   useEffect(() => {
-    // Escape closes the points explainer first, if open.
-    const handler = e => { if (e.key === 'Escape') (showInfo ? setShowInfo(false) : onClose()); };
+    // Escape unwinds one layer at a time: profile, then the points explainer,
+    // then the rankings themselves.
+    const handler = e => {
+      if (e.key !== 'Escape') return;
+      if (profile) setProfile(null);
+      else if (showInfo) setShowInfo(false);
+      else onClose();
+    };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [onClose, showInfo]);
+  }, [onClose, showInfo, profile]);
+
+  // A ranked player with no final this season has no entry in the leaderboard,
+  // so stand in an empty record — the profile already renders "No final
+  // appearances yet" for it, which beats making only some rows clickable.
+  const openProfile = player =>
+    setProfile(
+      statByName[player.name] ?? {
+        name: player.name,
+        fullName: player.name,
+        country: player.country || null,
+        wins: 0, runnerUp: 0, points: 0, total: 0,
+        winsList: [], runnerUpList: [],
+        surfaceWins: {}, surfaceFinals: {},
+      },
+    );
 
   const accentColor = tour === 'atp' ? '#0066cc' : '#be398d';
 
@@ -245,12 +268,19 @@ export default function RankingsDialog({ monthLabel, rankings, prevRankings, all
 
             return (
               <div
-                key={player.rank}
+                key={`${player.rank}-${player.name}`}
+                onClick={() => openProfile(player)}
+                title={`${player.name} — season record`}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 style={{
                   display: 'grid',
                   gridTemplateColumns: '36px 1fr 70px 40px',
                   alignItems: 'center',
                   padding: '7px 0',
+                  cursor: 'pointer',
+                  borderRadius: '4px',
+                  transition: 'background 0.12s',
                   borderBottom: player.rank === 10 || player.rank === 20
                     ? '1px solid #252540'
                     : '1px solid #1a1a28',
@@ -327,6 +357,15 @@ export default function RankingsDialog({ monthLabel, rankings, prevRankings, all
         </div>
       </div>
       {showInfo && <PointsInfoDialog tour={tour} onClose={() => setShowInfo(false)} />}
+      {profile && (
+        <PlayerProfileDialog
+          stat={profile}
+          profile={profiles?.[profile.name]}
+          tour={tour}
+          monthLabel={monthLabel}
+          onClose={() => setProfile(null)}
+        />
+      )}
     </div>
   );
 }

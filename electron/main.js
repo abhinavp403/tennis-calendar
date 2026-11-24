@@ -26,8 +26,9 @@ async function syncUserData() {
     'rankings.json': '{"atp":{},"wta":{}}',
     'players.json': '{"atp":{},"wta":{}}',
     'race.json': '{}',
+    'profiles.json': '{}',
   };
-  const DATA_FILES = ['tournaments.json', 'rankings.json', 'players.json', 'race.json'];
+  const DATA_FILES = ['tournaments.json', 'rankings.json', 'players.json', 'race.json', 'profiles.json'];
 
   // Ensure userData files exist (empty structure if Gist unreachable on first launch)
   for (const file of DATA_FILES) {
@@ -141,7 +142,7 @@ app.whenReady().then(async () => {
     try {
       event.returnValue = readFileSync(path.join(userDataDir, file), 'utf-8');
     } catch {
-      event.returnValue = file.includes('race') ? '{}'
+      event.returnValue = file.includes('race') || file.includes('profiles') ? '{}'
         : file.includes('rankings') ? '{"atp":{},"wta":{}}' : '{"atp":[],"wta":[]}';
     }
   });

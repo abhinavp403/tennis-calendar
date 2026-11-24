@@ -15,6 +15,8 @@
  *   SKIP_GIST_PUSH=1 node scripts/enrichPlayers.js    # dry run, print only
  */
 
+import { fileURLToPath } from 'url';
+import path from 'path';
 import { fetchGistFiles, updateGistContent } from './updateGist.js';
 
 const UA = 'TennisCalendar/1.0 (https://github.com/abhinavp403/tennis-calendar; noreply@github.com)';
@@ -235,4 +237,8 @@ async function main() {
   else console.log('Nothing to update.');
 }
 
-main().catch(err => { console.error(err); process.exit(1); });
+// Run only when invoked directly, so other scripts can import fullNameMatches
+// without kicking off a full enrichment pass.
+if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+  main().catch(err => { console.error(err); process.exit(1); });
+}

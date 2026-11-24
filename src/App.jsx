@@ -449,6 +449,7 @@ export default function App() {
               tour={tour}
               rankingsData={rankingsData}
               players={data.players}
+              profiles={data.profiles}
               flashId={flashId}
             />
           </div>
@@ -475,6 +476,7 @@ export default function App() {
       {profilePlayer && (
         <PlayerProfileDialog
           stat={profilePlayer}
+          profile={data.profiles?.[tour]?.[profilePlayer.name]}
           tour={tour}
           monthLabel={currentDate.format('MMMM YYYY')}
           onClose={() => setProfilePlayer(null)}

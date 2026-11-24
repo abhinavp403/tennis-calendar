@@ -6,11 +6,11 @@ import RankingsDialog from './RankingsDialog.jsx';
 import PlayerStatsDialog from './PlayerStatsDialog.jsx';
 
 import { rankingKeyDate } from '../utils/rankingKeys.js';
-import { cumulativeCompleted } from '../utils/playerStats.js';
+import { cumulativeCompleted, buildPlayerStats } from '../utils/playerStats.js';
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-export default function Calendar({ currentDate, tournaments, allTournaments, tour, rankingsData, players, flashId }) {
+export default function Calendar({ currentDate, tournaments, allTournaments, tour, rankingsData, players, profiles, flashId }) {
   const [showSummary, setShowSummary] = useState(false);
   const [showRankings, setShowRankings] = useState(false);
   const [showStats, setShowStats] = useState(false);
@@ -81,6 +81,13 @@ export default function Calendar({ currentDate, tournaments, allTournaments, tou
   const activeRankingKey = monthSnapshotKeys.at(-1) ?? (isCurrentMonth ? latestToDate : null);
   const usingLatestFallback = monthSnapshotKeys.length === 0 && activeRankingKey !== null;
   const rankingsLabel = usingLatestFallback ? 'Latest' : monthLabel;
+
+  // Season-to-date record per player, so a row in the rankings can open the
+  // same profile the Player Stats leaderboard does. Keyed by the abbreviated
+  // name both data sets share ("J. Sinner").
+  const statByName = Object.fromEntries(
+    buildPlayerStats(cumulativeTournaments, players?.[tour]).map(s => [s.name, s]),
+  );
   const rankings = activeRankingKey ? tourRankings[activeRankingKey] : null;
   const activeRankingIdx = activeRankingKey ? sortedRankingKeys.indexOf(activeRankingKey) : -1;
   const prevRankings = activeRankingIdx > 0 ? tourRankings[sortedRankingKeys[activeRankingIdx - 1]] : null;
@@ -209,6 +216,7 @@ export default function Calendar({ currentDate, tournaments, allTournaments, tou
           completedTournaments={cumulativeTournaments}
           tour={tour}
           countryByName={players?.[tour]}
+          profiles={profiles?.[tour]}
           onClose={() => setShowStats(false)}
         />
       )}
@@ -221,6 +229,8 @@ export default function Calendar({ currentDate, tournaments, allTournaments, tou
           allRankings={tourRankings}
           activeKey={activeRankingKey}
           tour={tour}
+          statByName={statByName}
+          profiles={profiles?.[tour]}
           onClose={() => setShowRankings(false)}
         />
       )}

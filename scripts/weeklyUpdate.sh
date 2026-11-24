@@ -26,4 +26,7 @@ $NODE scripts/fetchRankings.js >> "$LOG" 2>&1
 # Race to the Finals top 10 (pushes race.json to Gist if changed)
 $NODE scripts/fetchRace.js >> "$LOG" 2>&1
 
+# Player profiles — age, height, plays, turned pro (Wikidata) for new players
+$NODE scripts/fetchProfiles.js >> "$LOG" 2>&1
+
 echo "=== Done ===" >> "$LOG"

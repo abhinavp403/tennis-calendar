@@ -15,7 +15,63 @@ const levelLabel = level => {
   return level != null ? String(level) : '';
 };
 
-export default function PlayerProfileDialog({ stat, tour, monthLabel, onClose }) {
+// The app's tier colours (see the calendar legend): Grand Slam / Finals violet,
+// 1000 amber, 500 blue, 250 grey.
+const LEVEL_COLOR = { 2000: '#a78bfa', 1500: '#a78bfa', 1000: '#f59e0b', 500: '#3b82f6', 250: '#8b8fa8' };
+
+// Shared look for the level and surface tags on each tournament row.
+const tagStyle = (color, bg) => ({
+  fontSize: '10px', fontWeight: '700',
+  padding: '2px 6px', borderRadius: '4px',
+  background: bg, color,
+  letterSpacing: '0.3px', whiteSpace: 'nowrap',
+});
+
+// Age from an ISO date of birth, computed at display time so it never goes
+// stale (profiles.json stores the date, not the age).
+function ageFrom(dob) {
+  const [y, m, d] = dob.split('-').map(Number);
+  const now = new Date();
+  let age = now.getFullYear() - y;
+  if (now.getMonth() + 1 < m || (now.getMonth() + 1 === m && now.getDate() < d)) age--;
+  return age;
+}
+
+function heightLabel(cm) {
+  const totalIn = Math.round(cm / 2.54);
+  return `${cm} cm (${Math.floor(totalIn / 12)}′${totalIn % 12}″)`;
+}
+
+// Basic facts from profiles.json (Wikipedia infobox + Wikidata). Every field
+// is optional — a few players lack a turned-pro year or height — so show what exists.
+// The full name isn't here — it's the dialog's title instead. Short facts are
+// paired two to a row; long ones (`wide`) take a full row so they aren't cut off.
+function profileDetails(profile) {
+  if (!profile || profile.missing) return [];
+  const items = [];
+  if (profile.dob) {
+    const born = new Date(`${profile.dob}T00:00:00`).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' });
+    items.push({ label: 'Age', value: String(ageFrom(profile.dob)), title: `Born ${born}` });
+  }
+  if (profile.heightCm) items.push({ label: 'Height', value: heightLabel(profile.heightCm) });
+  if (profile.turnedPro) items.push({ label: 'Turned pro', value: String(profile.turnedPro) });
+  if (profile.careerTitles != null) items.push({ label: 'Career titles', value: String(profile.careerTitles) });
+  if (profile.careerHigh) {
+    const when = profile.careerHighDate
+      ? ` (${new Date(`${profile.careerHighDate}T00:00:00`).toLocaleDateString('en', { month: 'short', year: 'numeric' })})`
+      : '';
+    items.push({ label: 'Career high', value: `No. ${profile.careerHigh}${when}` });
+  }
+  if (profile.plays) {
+    const hand = profile.plays === 'left' ? 'Left-handed' : 'Right-handed';
+    items.push({ label: 'Plays', value: profile.backhand ? `${hand}, ${profile.backhand} backhand` : hand, wide: true });
+  }
+  if (profile.birthplace) items.push({ label: 'Born in', value: profile.birthplace, wide: true });
+  if (profile.coach) items.push({ label: 'Coach', value: profile.coach, wide: true });
+  return items;
+}
+
+export default function PlayerProfileDialog({ stat, profile, tour, monthLabel, onClose }) {
   useEffect(() => {
     const handler = e => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handler);
@@ -52,24 +108,22 @@ export default function PlayerProfileDialog({ stat, tour, monthLabel, onClose })
           {t.name}
         </div>
         <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
-          {t.opponent && <>vs {t.opponent} · </>}
-          {t.score && <>{t.score} · </>}
-          {levelLabel(t.level)}
+          {[t.opponent && `vs ${t.opponent}`, t.score].filter(Boolean).join(' · ')}
         </div>
       </div>
-      {SURFACE_META[t.surface] && (
-        <span
-          style={{
-            fontSize: '10px', fontWeight: '700',
-            padding: '2px 6px', borderRadius: '4px',
-            background: SURFACE_META[t.surface].bg,
-            color:      SURFACE_META[t.surface].color,
-            letterSpacing: '0.3px', whiteSpace: 'nowrap',
-          }}
-        >
-          {SURFACE_META[t.surface].short}
-        </span>
-      )}
+      {/* Level, then surface — same tag style, each in its own colour */}
+      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+        {levelLabel(t.level) && (
+          <span style={tagStyle(LEVEL_COLOR[t.level] ?? '#8b8fa8', `${LEVEL_COLOR[t.level] ?? '#8b8fa8'}26`)}>
+            {levelLabel(t.level)}
+          </span>
+        )}
+        {SURFACE_META[t.surface] && (
+          <span style={tagStyle(SURFACE_META[t.surface].color, SURFACE_META[t.surface].bg)}>
+            {SURFACE_META[t.surface].short}
+          </span>
+        )}
+      </div>
     </div>
   );
 
@@ -105,11 +159,26 @@ export default function PlayerProfileDialog({ stat, tour, monthLabel, onClose })
             flexShrink: 0,
           }}
         >
-          <div>
+          <div style={{ flex: 1, minWidth: 0, marginRight: '12px' }}>
             <div style={{ fontSize: '20px', fontWeight: '700', color: 'white' }}>
               {stat.country && <span style={{ marginRight: '8px' }}>{countryFlag(stat.country)}</span>}
-              {stat.name}
+              {/* Full name when we have it ("Félix Auger-Aliassime"), else the abbreviated one */}
+              {profile?.full ?? stat.name}
             </div>
+            {profileDetails(profile).length > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: '5px 18px', marginTop: '10px', fontSize: '12.5px' }}>
+                {profileDetails(profile).map(item => (
+                  <div
+                    key={item.label}
+                    title={item.title}
+                    style={item.wide ? { gridColumn: '1 / -1' } : { whiteSpace: 'nowrap' }}
+                  >
+                    <span style={{ color: '#6b7280' }}>{item.label}:</span>{' '}
+                    <span style={{ color: '#e5e7eb', fontWeight: '600' }}>{item.value}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <button
             onClick={onClose}

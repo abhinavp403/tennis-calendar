@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getRankings: () => JSON.parse(ipcRenderer.sendSync('get-data', 'rankings.json')),
   getPlayers: () => JSON.parse(ipcRenderer.sendSync('get-data', 'players.json')),
   getRace: () => JSON.parse(ipcRenderer.sendSync('get-data', 'race.json')),
+  getProfiles: () => JSON.parse(ipcRenderer.sendSync('get-data', 'profiles.json')),
   getSyncTime: () => ipcRenderer.sendSync('get-sync-time'),
   triggerSync: () => ipcRenderer.invoke('sync-data'),
 });

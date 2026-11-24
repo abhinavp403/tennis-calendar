@@ -10,7 +10,7 @@ const SURFACE_META = {
   Grass:         { short: 'Grass',  color: '#22c55e', bg: 'rgba(34,197,94,0.15)' },
 };
 
-export default function PlayerStatsDialog({ monthLabel, completedTournaments, tour, countryByName, onClose }) {
+export default function PlayerStatsDialog({ monthLabel, completedTournaments, tour, countryByName, profiles, onClose }) {
   // hoveredPlayer = null | { name, top, left, placeAbove }
   const [hoveredPlayer, setHoveredPlayer] = useState(null);
   // selectedPlayer = null | string (player name)
@@ -330,6 +330,7 @@ export default function PlayerStatsDialog({ monthLabel, completedTournaments, to
         return (
           <PlayerProfileDialog
             stat={stat}
+            profile={profiles?.[stat.name]}
             tour={tour}
             monthLabel={monthLabel}
             onClose={() => setSelectedPlayer(null)}

@@ -10,7 +10,7 @@
  * tour, only when TennisExplorer fails or returns an unusable table.
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, appendFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import { updateGistContent, fetchGistFiles } from './updateGist.js';
@@ -351,5 +351,11 @@ export async function fetchMissingRankings(dataPath = DATA_PATH) {
 
 // Allow running directly: node scripts/fetchRankings.js
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
-  fetchMissingRankings().catch(console.error);
+  fetchMissingRankings()
+    .then(updated => {
+      // In GitHub Actions, report whether a new snapshot was stored, so later
+      // steps can run only on the weekly rankings update (see fetchProfiles).
+      if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `updated=${updated}\n`);
+    })
+    .catch(console.error);
 }

@@ -69,11 +69,23 @@ jobs:
           GH_TOKEN: ${{ secrets.GIST_TOKEN }}
 
       - name: Fetch missing rankings
+        id: rankings
         run: node scripts/fetchRankings.js
         env:
           GH_TOKEN: ${{ secrets.GIST_TOKEN }}
 
       - name: Fetch race to the Finals standings
         run: node scripts/fetchRace.js
+        env:
+          GH_TOKEN: ${{ secrets.GIST_TOKEN }}
+
+      # Weekly, not every pass: only when the step above stored a new rankings
+      # snapshot (the Monday update), or on a manual run. Profile facts barely
+      # change, so a new finalist outside the top 20 waits at most a week.
+      # Placed last so it sees every player the steps above added; only players
+      # without a profile are looked up.
+      - name: Fetch player profiles (age, height, plays, turned pro)
+        if: steps.rankings.outputs.updated == 'true' || github.event_name == 'workflow_dispatch'
+        run: node scripts/fetchProfiles.js
         env:
           GH_TOKEN: ${{ secrets.GIST_TOKEN }}
